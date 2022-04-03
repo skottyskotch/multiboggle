@@ -1,0 +1,26 @@
+{
+  "name": "multiboggle",
+  "version": "1.0.0",
+  "description": "massive multiplayer online boggle",
+  "main": "index.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skottyskotch/multiboggle.git"
+  },
+  "keywords": [
+    "mmo",
+    "boggle"
+  ],
+  "author": "alexandre Henry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/skottyskotch/multiboggle/issues"
+  },
+  "homepage": "https://github.com/skottyskotch/multiboggle#readme",
+  "dependencies": {
+    "express": "^4.17.3"
+  }
+}
