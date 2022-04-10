@@ -2,7 +2,7 @@ import random, unicodedata, sys, time
 
 def initDict():
 	print 'retrieve the list of words'
-	with open("/Users/falcou/Alex/Prog/boggle/dict_concat_fr.csv", 'r') as fp:
+	with open("/Users/falcou/Alex/Prog/boggle/resource/dict_concat_fr.csv", 'r') as fp:
 	    for count, line in enumerate(fp):
 	    	word = unicodedata.normalize('NFD',unicode(line,'utf-8')).encode('ascii','ignore').strip().upper()
 	    	if len(word) > 2 and len(word) < 17:
@@ -11,7 +11,7 @@ def initDict():
 		    	else:
 		    		wordDict[len(word)] = [word]
 	print 'optimization'
-	with open("/Users/falcou/Alex/Prog/boggle/dict_concat_fr.csv", 'r') as fp:
+	with open("/Users/falcou/Alex/Prog/boggle/resource/dict_concat_fr.csv", 'r') as fp:
 	    for count, line in enumerate(fp):
 	    	word = unicodedata.normalize('NFD',unicode(line,'utf-8')).encode('ascii','ignore').strip().upper()
 	    	if len(word) < 17:
@@ -71,7 +71,7 @@ def findSolutions():
 			testedPositions = []
 			recurse(i,j,testedPositions)
 	endTime = time.time()
-	print 'solution found in ' + str(endTime - startTime)
+	print str(len(solutions)) + ' words found in ' + str(endTime - startTime)
 
 def sortSolution(solutions):
 	result = []
