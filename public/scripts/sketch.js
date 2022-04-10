@@ -13,6 +13,7 @@ function setup(){
 	playButton = createButton('Play');
 	playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
 	playButton.mousePressed(launchGame);
+	socket = io.connect('http://localhost:3000');
 }
 
 function draw(){
