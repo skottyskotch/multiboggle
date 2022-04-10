@@ -9,8 +9,10 @@ function setup(){
 	//let inputName = enterYourName();
 	inputName = createInput();
 	inputName.center();
+	inputName.value('Anon');
 	playButton = createButton('Play');
 	playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
+	playButton.mousePressed(launchGame);
 }
 
 function draw(){
@@ -27,4 +29,8 @@ function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	inputName.center();
 	playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
+}
+
+function launchGame(){
+	console.log('GO');
 }
