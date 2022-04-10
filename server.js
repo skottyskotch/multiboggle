@@ -26,9 +26,21 @@ function index(request, response){
 var socket = require('socket.io');
 var io = socket(server);
 io.sockets.on('connection', newConnection);
-
 function newConnection(socket){
   var player = new Player();
   console.log('new connection: player ' + player.name);
-  socket.emit('hello ' + player.name);
+  socket.emit("hello", player.name);
+
+  socket.on('playGame', function(playerName){
+    console.log(playerName);
+    player.name = playerName;
+    socket.join('game');
+  });
+  function newGame(playerName){
+    console.log(playerName);
+  }
+}
+
+function startBoggle(){
+  
 }
