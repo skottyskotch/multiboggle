@@ -1,3 +1,5 @@
+var Boggle = require ('./Boggle');
+
 // class Player
 class Player {
   constructor(socketId){
@@ -12,6 +14,19 @@ class Player {
 }
 Player.id = 0;
 Player.instances = {};
+
+class Room {
+  constructor(){
+    // new room is created as soon as the first player enters
+    this.id = Room.id++;
+    this.maxPlayers = 10;
+    this.players = [];
+    this.game = 0;
+    Room.instances.push(this);
+  }
+}
+Room.id = 0;
+Room.instances = [];
 
 console.log('server starting');
 var express = require('express');
@@ -31,10 +46,23 @@ function newConnection(socket){
   console.log('new connection: player ' + player.name);
   socket.emit("hello", player.name);
 
-  socket.on('playGame', function(playerName){
+  socket.on('playGame', function(playerName, welcome){
     console.log(playerName);
     player.name = playerName;
-    socket.join('game');
+    var game = undefined;
+    if (Room.instances.length == 0) game = new Room();
+    else {
+      var noRoom = true;
+      for (var eachRoom of Room.instances){
+        if (eachRoom.players.length < eachRoom.maxPlayers) {
+          game = eachRoom;
+          noRoom = false;
+        }
+      }
+      if (noRoom == true) game = new room();
+      socket.join('game', game.id);
+    }
+    welcome(game.id);
   });
   function newGame(playerName){
     console.log(playerName);
