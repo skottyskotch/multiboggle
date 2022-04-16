@@ -104,7 +104,7 @@ function findSolutions(){
 		}
 	}
 	var endTime = Date.now();
-	console.log(tempSolutions.length + ' words found in ' + String(endTime - startTime));
+	console.log(tempSolutions.length + ' words found in ' + String((endTime - startTime)/1000));
 	var dSolutions = {};
 	for (var sol of tempSolutions){
 		dSolutions[sol] = '';
@@ -125,16 +125,21 @@ function sortSolution(aSolutions){
 	return result;
 }
 
+var grid = [];
+var wordList = {};
+var wordRootsList = [];
 function boggle() {
-	var wordList = initDict();
-	var wordRootsList = initWordRoots(wordList);
-	var grid = initGrid();
+	wordList = initDict();
+	wordRootsList = initWordRoots(wordList);
+	grid = initGrid();
 	var solutions = sortSolution(findSolutions());
-	for (var solution of solutions){
-		console.log(solution);
-	}
-	for (var row of grid){
-		console.log(row.join(','));
-	}
+	//for (var solution of solutions){
+	//	console.log(solution);
+	//}
+	//for (var row of grid){
+	//	console.log(row.join(','));
+	//}
 	return {'grid':grid, 'solutions': solutions};
 }
+
+module.exports.boggle = boggle;

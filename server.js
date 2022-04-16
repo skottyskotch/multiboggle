@@ -22,7 +22,78 @@ class Room {
     this.maxPlayers = 10;
     this.players = [];
     this.game = 0;
+    this.state = 'starting';
+    this.gameTimer = undefined;
     Room.instances.push(this);
+
+    let _this = this;
+    setInterval(function () {_this.loop() },10000);
+  }
+
+  loop() {
+    this.game++;
+    console.log('Room ' + this.id + ' - Game #' + game + ' - rolling');
+    // generate
+
+    console.log('Room ' + this.id + ' - Game #' + game + ' - game');
+    // emit grid to the room
+    var loop = setTimeout(function() {
+      // emit results to the room
+      setTimeout(function() {
+        // reset timers
+      }, 1000);
+    }, 1000);
+
+var i = 0;
+var loop = setTimeout(
+            function () {
+              i++;
+              
+              console.log('hey');
+              setTimeout(function () {
+                        console.log('ho');
+                        if (i < 5) loop.refresh();
+                      },2000);
+
+            },1000);
+
+
+
+var i = 0;
+var loop = setTimeout(
+            function () {
+              i++;
+              if (i < 5) loop.refresh();
+              console.log('hey')}
+            ,2000
+          );
+
+
+
+
+console.log('-----rolling');
+    this.state = 'rolling';
+    io.sockets.in(this.id).emit('rolling');
+    var newRoll = Boggle.boggle();
+console.log('playing');
+    this.state = 'playing';
+    io.sockets.in(this.id).emit('playing');
+    let _this = this;
+    setTimeout(function() {
+      console.log('scoring');
+      io.sockets.in(this.id).emit('scoring');
+    }, 5000);
+  }
+
+  rollNewGrid(){
+    //
+
+  }
+  runNewGame(){
+      //2m30s game
+  }
+  waitNewGame(){
+    //15-30s to count
   }
 }
 Room.id = 0;
@@ -47,7 +118,7 @@ function newConnection(socket){
   socket.emit("hello", player.name);
 
   socket.on('playGame', function(playerName, welcome){
-    console.log(playerName);
+    console.log(playerName + ' request a game');
     player.name = playerName;
     var game = undefined;
     if (Room.instances.length == 0) game = new Room();
@@ -64,11 +135,4 @@ function newConnection(socket){
     }
     welcome(game.id);
   });
-  function newGame(playerName){
-    console.log(playerName);
-  }
-}
-
-function startBoggle(){
-  
 }
