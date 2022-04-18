@@ -98,7 +98,7 @@ function findSolutions(){
 	var startTime = Date.now();
 	for (var i = 0; i < 4; i++){
 		for (var j = 0; j < 4; j++){
-			console.log("recurse for " + i + "," + j + ": " + grid[i][j]);
+			//console.log("recurse for " + i + "," + j + ": " + grid[i][j]);
 			var testedPositions = [];
 			recurse(i,j,testedPositions,tempSolutions);
 		}
@@ -136,9 +136,9 @@ function boggle() {
 	//for (var solution of solutions){
 	//	console.log(solution);
 	//}
-	//for (var row of grid){
-	//	console.log(row.join(','));
-	//}
+	for (var row of grid){
+		console.log(row.join(','));
+	}
 	return {'grid':grid, 'solutions': solutions};
 }
 

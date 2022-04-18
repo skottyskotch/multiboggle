@@ -22,78 +22,41 @@ class Room {
     this.maxPlayers = 10;
     this.players = [];
     this.game = 0;
-    this.state = 'starting';
+    this.state = 'starting'; // [starting, rolling, gaming, ending]
+    this.grid = [];
+    this.solutions = [];
     this.gameTimer = undefined;
     Room.instances.push(this);
 
-    let _this = this;
-    setInterval(function () {_this.loop() },10000);
+    this.mainLoop();
   }
 
-  loop() {
-    this.game++;
-    console.log('Room ' + this.id + ' - Game #' + game + ' - rolling');
-    // generate
+  mainLoop(){
+    var loop = setTimeout(
+      () => {
+        this.game++;
+        console.log('Room ' + this.id + ' - Game #' + this.game + ' - rolling');
+        this.state = 'rolling';
+        io.sockets.in(this.id).emit('rolling', this.game);
+        var grid_solutions = Boggle.boggle(); //  return {'grid':grid, 'solutions': solutions};
+        this.grid = grid_solutions['grid'];
+        this.solutions = grid_solutions['solutions'];
 
-    console.log('Room ' + this.id + ' - Game #' + game + ' - game');
-    // emit grid to the room
-    var loop = setTimeout(function() {
-      // emit results to the room
-      setTimeout(function() {
-        // reset timers
-      }, 1000);
-    }, 1000);
-
-var i = 0;
-var loop = setTimeout(
-            function () {
-              i++;
-              
-              console.log('hey');
-              setTimeout(function () {
-                        console.log('ho');
-                        if (i < 5) loop.refresh();
-                      },2000);
-
-            },1000);
-
-
-
-var i = 0;
-var loop = setTimeout(
-            function () {
-              i++;
-              if (i < 5) loop.refresh();
-              console.log('hey')}
-            ,2000
-          );
-
-
-
-
-console.log('-----rolling');
-    this.state = 'rolling';
-    io.sockets.in(this.id).emit('rolling');
-    var newRoll = Boggle.boggle();
-console.log('playing');
-    this.state = 'playing';
-    io.sockets.in(this.id).emit('playing');
-    let _this = this;
-    setTimeout(function() {
-      console.log('scoring');
-      io.sockets.in(this.id).emit('scoring');
-    }, 5000);
-  }
-
-  rollNewGrid(){
-    //
-
-  }
-  runNewGame(){
-      //2m30s game
-  }
-  waitNewGame(){
-    //15-30s to count
+        console.log('Room ' + this.id + ' - Game #' + this.game + ' - game');
+        this.state = 'gaming';
+        io.sockets.in(this.id).emit('game', this.game, this.grid);
+        var phase1 = setTimeout(() => {
+          // compute results
+          // emit results to the room
+          console.log('Room ' + this.id + ' - Game #' + this.game + ' - results');
+          this.state = 'ending';
+          io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
+          var phase2 = setTimeout(() => {
+            // reset timers
+            loop.refresh();
+          }, 3000); // display solutions duration
+        }, 10000); // game duration
+      },0);
   }
 }
 Room.id = 0;
@@ -112,13 +75,16 @@ function index(request, response){
 var socket = require('socket.io');
 var io = socket(server);
 io.sockets.on('connection', newConnection);
+
+var game = new Room();
+
 function newConnection(socket){
   var player = new Player();
   console.log('new connection: player ' + player.name);
-  socket.emit("hello", player.name);
+  socket.emit('hello', player.name);
 
   socket.on('playGame', function(playerName, welcome){
-    console.log(playerName + ' request a game');
+    // 1 choose the room
     player.name = playerName;
     var game = undefined;
     if (Room.instances.length == 0) game = new Room();
@@ -130,9 +96,19 @@ function newConnection(socket){
           noRoom = false;
         }
       }
-      if (noRoom == true) game = new room();
-      socket.join('game', game.id);
+      if (noRoom == true) game = new Room();
     }
-    welcome(game.id);
+    console.log('Player ' + player.name + ' joins room #' + game.id);
+    // 2 join the room
+    socket.join(game.id);
+    // 3 returns the room state
+    let grid = [];
+    let solutions = [];
+    if (game.state == 'gaming') grid = game.grid;
+    if (game.state == 'ending') {
+      solutions = game.solutions;
+      grid = game.grid;
+    }
+    welcome(game.id, game.state, game.game, grid, solutions);
   });
 }
