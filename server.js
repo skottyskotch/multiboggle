@@ -54,8 +54,8 @@ class Room {
           var phase2 = setTimeout(() => {
             // reset timers
             loop.refresh();
-          }, 3000); // display solutions duration
-        }, 10000); // game duration
+          }, 1000); // display solutions duration
+        }, 150000); // game duration
       },0);
   }
 }
