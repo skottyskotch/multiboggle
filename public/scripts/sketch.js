@@ -4,13 +4,15 @@ class Room {
 		this.id = id;
 		this.game = game;
 		this.state = state;
+		this.rankings = [];
 		this.grid = grid;
 		this.linearGrid = [];
 		this.possibilitiesHistory = [];
 		this.possibilitiesHistoryByIndex = [];
 		this.highlightedLetters = [];
 		this.solutions = solutions;
-		this.countDown = 0;
+		this.found = [];
+		this.score = 0;
 		this.update(grid);
 		Room.instance = this;
 	}
@@ -24,6 +26,23 @@ class Room {
 		this.linearGrid.push(...this.grid[3]);
 		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+	}
+
+	cleanWord(){
+		this.highlightedLetters = [];
+		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+	}
+
+	checkAnswer(score, word) {
+		if (score > 0) {
+			this.score = score;
+			this.found.push(word.toUpperCase());
+		} else if (score == 0) {
+			// already found
+		} else if (score == -1) {
+			// not a solution
+		}
 	}
 
 	checkLettersToHighlight(inputWord){
@@ -95,12 +114,8 @@ class Room {
 		}
 	}
 
-	highlightLetters(){
-		console.log(this.highlightedLetters);
-	}
-
 	displayPlayerInfo(){
-	
+		
 	}
 
 	displayTop10(){
@@ -194,7 +209,7 @@ function draw(){
 			y = height*0.8;
 			text('>', x-20, height*0.8, width-40, height-40);
 			text(inputWord, x, y, width-40, height-40);
-			//if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightLetters();
+			displayScore();
 		} else if (Room.instance.state == 'ending') {
 			let x = 0.5 * width;
 			let y = height * 0.2;
@@ -206,6 +221,10 @@ function draw(){
 	}
 }
 
+function displayScore(){
+	textWithSprites('Score ' + Room.instance.score, 10, 10, 1, 'LEFT');
+}
+
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	if (Room.instance == undefined) {
@@ -215,11 +234,18 @@ function windowResized() {
 }
 
 function keyPressed(){
-	if (Room.instance != undefined) {
+	if (Room.instance != undefined && Room.instance.state == 'gaming') {
 		if (keyCode == BACKSPACE){
 			inputWord = inputWord.substring(0, inputWord.length - 1);
 			if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
-		} else if (inputWord.length < 16 && [DELETE,ENTER,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
+		} else if (keyCode == ENTER) {
+			if (inputWord.length <= 2) console.log('3 lettres mini');
+			else {
+				socket.emit('newWord',inputWord, function(answer){Room.instance.checkAnswer(answer,inputWord)});
+				Room.instance.cleanWord();
+				inputWord = '';
+			}
+		} else if (inputWord.length < 16 && [DELETE,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
 			inputWord += key;
 			Room.instance.checkLettersToHighlight(inputWord);
 		}
@@ -231,7 +257,6 @@ function launchGame(){
 					// create the map object
 					removeElements();
 					started = true;
-					console.log('room ' + id + ' - state: ' + state);
 					Room.instance = new Room(id, state, game, grid, solutions);
 				});
 }

@@ -4,15 +4,16 @@ var Boggle = require ('./Boggle');
 class Player {
   constructor(socketId){
     // new player is created as soon as reaching the home page
-    this.id = Player.id++;
-    this.socket = socketId;
+    this.id = socketId;
     this.score = 0;
     this.rank = 0;
+    this.room = undefined;
+    this.found = [];
     Player.instances[this.id] = this;
-    this.name = 'Anon'+this.id;
+    this.number = Object.keys(Player.instances).length;
+    this.name = 'Anon'+this.number;
   }
 }
-Player.id = 0;
 Player.instances = {};
 
 class Room {
@@ -29,6 +30,24 @@ class Room {
     Room.instances.push(this);
 
     this.mainLoop();
+  }
+
+  checkSolution(word, player){
+    if (player.found.indexOf(word) > -1) return 0; // already found
+    else if (player.room.solutions.indexOf(word.toUpperCase()) > - 1) {
+    //Mot de 3 ou 4 lettres : 1 point
+    //Mot de 5 lettres : 2 points
+    //Mot de 6 lettres : 3 points
+    //Mot de 7 lettres : 5 points
+    //Mot de 8 lettres ou plus : 11 points
+      if (word.length == 3) player.score += 1;
+      else if (word.length == 4) player.score += 1;
+      else if (word.length == 5) player.score += 2;
+      else if (word.length == 6) player.score += 3;
+      else if (word.length == 7) player.score += 5;
+      else if (word.length >= 8) player.score += 11;
+      return player.score;
+    } else return -1; // not a solution
   }
 
   mainLoop(){
@@ -55,7 +74,7 @@ class Room {
             // reset timers
             loop.refresh();
           }, 1000); // display solutions duration
-        }, 1500000); // game duration
+        }, 150000); // game duration
       },0);
   }
 }
@@ -79,7 +98,7 @@ io.sockets.on('connection', newConnection);
 var game = new Room();
 
 function newConnection(socket){
-  var player = new Player();
+  var player = new Player(socket.id);
   console.log('new connection: player ' + player.name);
   socket.emit('hello', player.name);
 
@@ -101,6 +120,7 @@ function newConnection(socket){
     console.log('Player ' + player.name + ' joins room #' + game.id);
     // 2 join the room
     socket.join(game.id);
+    player.room = game;
     // 3 returns the room state
     let grid = [];
     let solutions = [];
@@ -110,5 +130,10 @@ function newConnection(socket){
       grid = game.grid;
     }
     welcome(game.id, game.state, game.game, grid, solutions);
+  });
+
+  socket.on('newWord', function(word, result){
+    var score = Player.instances[socket.id].room.checkSolution(word,Player.instances[socket.id]);
+    result(score);
   });
 }
