@@ -28,17 +28,10 @@ class Room {
 
 	checkLettersToHighlight(inputWord){
 		inputWord = inputWord.toUpperCase();
-		console.log('inputWord: ' + inputWord);
 		// search inputWord in possibilitiesHistory[inputWord.length - 1]
 		var foundInPreviousPossible = this.findWordInPossible(inputWord);
-		console.log('foundInPreviousPossible: ' + foundInPreviousPossible);
 		// create new possibilities
 		var possibilitiesArray = this.findNewPossibilities(foundInPreviousPossible, inputWord);
-		this.possibilitiesHistory[inputWord.length] = possibilitiesArray[0];
-		this.possibilitiesHistoryByIndex[inputWord.length] = possibilitiesArray[1];
-		this.highlightedLetters = foundInPreviousPossible[0];
-		console.log(this.possibilitiesHistory);
-		console.log(this.possibilitiesHistoryByIndex);
 	}
 
 	findWordInPossible(inputWord){
@@ -53,33 +46,29 @@ class Room {
 	}
 
 	findNewPossibilities(foundInPreviousPossible, inputWord) {
-		console.log('inputWord ' + inputWord + ' found ' + foundInPreviousPossible.length + ' times in possibilities')
+		//console.log('inputWord ' + inputWord + ' found ' + foundInPreviousPossible.length + ' times in possibilities')
 		var resultHistory = [];
 		var resultHistoryIndex = [];
 		for (var wordIndex of foundInPreviousPossible) {
 			var resultForOneElement = [];
 			var resultForOneElementIndex = [];
-			console.log('wordIndex: ' + wordIndex);
 			var word = this.possibilitiesHistory[inputWord.length-1][wordIndex];
-			console.log('gives in possible: ' + word);
-			console.log('with last char: ' + word.slice(-1));
 			var wordByIndex = this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex];
-			console.log('gives in possible by index: ' + wordByIndex);
-			console.log('with last element: ' + wordByIndex.slice(-1));
-			console.log('hashNeighbors[wordIndex]: ' + hashNeighbors[wordIndex]);
 			for (var letterIndex of hashNeighbors[wordByIndex.slice(-1)]) {
-				console.log('this.possibilitiesHistoryByIndex[inputWord.length-1]: ' + this.possibilitiesHistoryByIndex[inputWord.length-1]);
-				if (this.possibilitiesHistoryByIndex[inputWord.length-1][wordByIndex].indexOf(letterIndex) == -1) {
-					resultForOneElement.push(inputWord+this.linearGrid[letterIndex]);
-					var toto = this.possibilitiesHistoryByIndex[inputWord.length-1][wordByIndex];
-					resultForOneElementIndex = toto.push(letterIndex);
-					//resultForOneElementIndex.push(letterIndex);
+				if (wordByIndex.indexOf(letterIndex) == -1) {
+					resultForOneElementIndex = this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex].slice();
+					resultForOneElementIndex.push(letterIndex);
+					resultHistoryIndex.push(resultForOneElementIndex);
+					resultForOneElement.push(word+this.linearGrid[letterIndex]);
 				}
 			}
 			resultHistory.push(...resultForOneElement);
-			resultHistoryIndex.push(...resultForOneElementIndex);
 		}
-		return [resultHistory,resultHistoryIndex];
+		this.possibilitiesHistoryByIndex[inputWord.length] = resultHistoryIndex;
+		this.possibilitiesHistory[inputWord.length] = resultHistory;
+		this.highlightedLetters = foundInPreviousPossible[0];
+		this.highlightedLetters = this.possibilitiesHistoryByIndex[inputWord.length -1][foundInPreviousPossible[0]];
+		if (this.highlightedLetters == undefined) this.highlightedLetters = [];
 	}
 
 	displayGrid(){
@@ -91,7 +80,8 @@ class Room {
 				
 				if (Room.instance.state == 'gaming') {
 					stroke(255);
-					fill(0);
+					if (Room.instance.highlightedLetters.indexOf(j*4+i) != -1) fill(100);
+					else fill(0);
 				}
 				if (Room.instance.state == 'ending') {
 					stroke(125)
@@ -103,6 +93,10 @@ class Room {
 				if (Room.instance.grid != 'ending') textWithSprites(Room.instance.grid[j][i], x+squareLength/2, y+squareLength/4, 2, 'CENTER');
 			}
 		}
+	}
+
+	highlightLetters(){
+		console.log(this.highlightedLetters);
 	}
 
 	displayPlayerInfo(){
@@ -143,7 +137,6 @@ function setup(){
 						13:[                        8 ,9 ,10,   12,   14   ],
 						14:[                           9 ,10,11,   13,   15],
 						15:[                              10,11,      14   ]};
-	highlightedLetters = [];
 	playButton = createButton('Play');
 	playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
 	playButton.mousePressed(launchGame);
@@ -193,6 +186,7 @@ function draw(){
 			let y = height * 0.2;
 			textWithSprites('partie ' + '#' + Room.instance.game, x, y, 1, 'CENTER');
 			Room.instance.displayGrid();
+			stroke('cyan');
 			fill('cyan');
 			textFont('futura');
 			textSize(30);
@@ -200,7 +194,7 @@ function draw(){
 			y = height*0.8;
 			text('>', x-20, height*0.8, width-40, height-40);
 			text(inputWord, x, y, width-40, height-40);
-			if (Room.instance.highlightedLetters.length > 0) highlightLetters();
+			//if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightLetters();
 		} else if (Room.instance.state == 'ending') {
 			let x = 0.5 * width;
 			let y = height * 0.2;
@@ -223,13 +217,11 @@ function windowResized() {
 function keyPressed(){
 	if (Room.instance != undefined) {
 		if (keyCode == BACKSPACE){
-			console.log('BACKSPACE');
 			inputWord = inputWord.substring(0, inputWord.length - 1);
-			//Room.instance.possibilitiesHistory.pop();
-			//Room.instance.possibilitiesHistoryByIndex.pop();
+			if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
 		} else if (inputWord.length < 16 && [DELETE,ENTER,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
 			inputWord += key;
-			highlightedLetters = Room.instance.checkLettersToHighlight(inputWord);
+			Room.instance.checkLettersToHighlight(inputWord);
 		}
 	}
 }
