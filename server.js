@@ -55,7 +55,7 @@ class Room {
             // reset timers
             loop.refresh();
           }, 1000); // display solutions duration
-        }, 150000); // game duration
+        }, 1500000); // game duration
       },0);
   }
 }

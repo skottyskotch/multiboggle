@@ -7,6 +7,7 @@ class Room {
 		this.grid = grid;
 		this.linearGrid = [];
 		this.possibilitiesHistory = [];
+		this.possibilitiesHistoryByIndex = [];
 		this.highlightedLetters = [];
 		this.solutions = solutions;
 		this.countDown = 0;
@@ -22,16 +23,63 @@ class Room {
 		this.linearGrid.push(...this.grid[2]);
 		this.linearGrid.push(...this.grid[3]);
 		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 	}
 
 	checkLettersToHighlight(inputWord){
 		inputWord = inputWord.toUpperCase();
 		console.log('inputWord: ' + inputWord);
 		// search inputWord in possibilitiesHistory[inputWord.length - 1]
-		var foundInPreviousPossible = findLetterInPossible(inputWord);
+		var foundInPreviousPossible = this.findWordInPossible(inputWord);
+		console.log('foundInPreviousPossible: ' + foundInPreviousPossible);
 		// create new possibilities
-		this.possibilitiesHistory[inputWord.length] = findNewPossibilities(foundInPreviousPossible, inputWord);
+		var possibilitiesArray = this.findNewPossibilities(foundInPreviousPossible, inputWord);
+		this.possibilitiesHistory[inputWord.length] = possibilitiesArray[0];
+		this.possibilitiesHistoryByIndex[inputWord.length] = possibilitiesArray[1];
 		this.highlightedLetters = foundInPreviousPossible[0];
+		console.log(this.possibilitiesHistory);
+		console.log(this.possibilitiesHistoryByIndex);
+	}
+
+	findWordInPossible(inputWord){
+		var result = [];
+		var historyEntry = this.possibilitiesHistory[inputWord.length - 1];
+		for (var i = 0; i < historyEntry.length; i++) {
+			if (historyEntry[i] == inputWord.toUpperCase()) {
+				result.push(i);
+			}
+		}
+		return result;
+	}
+
+	findNewPossibilities(foundInPreviousPossible, inputWord) {
+		console.log('inputWord ' + inputWord + ' found ' + foundInPreviousPossible.length + ' times in possibilities')
+		var resultHistory = [];
+		var resultHistoryIndex = [];
+		for (var wordIndex of foundInPreviousPossible) {
+			var resultForOneElement = [];
+			var resultForOneElementIndex = [];
+			console.log('wordIndex: ' + wordIndex);
+			var word = this.possibilitiesHistory[inputWord.length-1][wordIndex];
+			console.log('gives in possible: ' + word);
+			console.log('with last char: ' + word.slice(-1));
+			var wordByIndex = this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex];
+			console.log('gives in possible by index: ' + wordByIndex);
+			console.log('with last element: ' + wordByIndex.slice(-1));
+			console.log('hashNeighbors[wordIndex]: ' + hashNeighbors[wordIndex]);
+			for (var letterIndex of hashNeighbors[wordByIndex.slice(-1)]) {
+				console.log('this.possibilitiesHistoryByIndex[inputWord.length-1]: ' + this.possibilitiesHistoryByIndex[inputWord.length-1]);
+				if (this.possibilitiesHistoryByIndex[inputWord.length-1][wordByIndex].indexOf(letterIndex) == -1) {
+					resultForOneElement.push(inputWord+this.linearGrid[letterIndex]);
+					var toto = this.possibilitiesHistoryByIndex[inputWord.length-1][wordByIndex];
+					resultForOneElementIndex = toto.push(letterIndex);
+					//resultForOneElementIndex.push(letterIndex);
+				}
+			}
+			resultHistory.push(...resultForOneElement);
+			resultHistoryIndex.push(...resultForOneElementIndex);
+		}
+		return [resultHistory,resultHistoryIndex];
 	}
 
 	displayGrid(){
@@ -85,7 +133,7 @@ function setup(){
 						3 :[      2,          6 ,7                         ],
 						4 :[0 ,1 ,         5,       8 ,9                   ],
 						5 :[0 ,1 ,2 ,   4 ,   6,    8 ,9 ,10               ],
-						6 :[   1 ,2 ,3 ,   5,    7 ,               13,14,15],
+						6 :[   1 ,2 ,3 ,   5,    7 ,   9 ,10,11            ],
 						7 :[      2, 3 ,      6,          10,11            ],
 						8 :[            4 ,5,          9 ,      12,13      ],
 						9 :[            4 ,5, 6,    8 ,   10,   12,13,14   ],
@@ -176,8 +224,9 @@ function keyPressed(){
 	if (Room.instance != undefined) {
 		if (keyCode == BACKSPACE){
 			console.log('BACKSPACE');
-			inputWord = inputWord.substring(0, inputWord.length -1);
-			Room.instance.possibilitiesHistory.pop();
+			inputWord = inputWord.substring(0, inputWord.length - 1);
+			//Room.instance.possibilitiesHistory.pop();
+			//Room.instance.possibilitiesHistoryByIndex.pop();
 		} else if (inputWord.length < 16 && [DELETE,ENTER,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
 			inputWord += key;
 			highlightedLetters = Room.instance.checkLettersToHighlight(inputWord);
@@ -195,30 +244,6 @@ function launchGame(){
 				});
 }
 
-
-
-function findLetterInPossible(inputWord){
-	var result = [];
-	var historyEntry = Room.instance.possibilitiesHistory[inputWord.length - 1];
-	for (var i = 0; i < historyEntry.length; i++) {
-		if (historyEntry[i] == inputWord) {
-			result.push(i);
-		}
-	}
-	return result;
-}
-
-function findNewPossibilities(foundInPreviousPossible, inputWord) {
-	var result = [];
-	for (var wordIndex of foundInPreviousPossible) {
-		var resultForOneElement = [];
-		for (var letter in hashNeighbors[wordIndex]) {
-			if (resultForOneElement.indexOf(letter) == -1) resultForOneElement.push(inputWord+letter);
-		}
-		result.push(...resultForOneElement);
-	}
-	return result;
-}
 
 
 
