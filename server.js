@@ -33,8 +33,9 @@ class Room {
   }
 
   checkSolution(word, player){
-    if (player.found.indexOf(word) > -1) return 0; // already found
+    if (player.found.indexOf(word.toUpperCase()) > -1) return 0; // already found
     else if (player.room.solutions.indexOf(word.toUpperCase()) > - 1) {
+      player.found.push(word.toUpperCase());
     //Mot de 3 ou 4 lettres : 1 point
     //Mot de 5 lettres : 2 points
     //Mot de 6 lettres : 3 points
@@ -60,6 +61,11 @@ class Room {
         var grid_solutions = Boggle.boggle(); //  return {'grid':grid, 'solutions': solutions};
         this.grid = grid_solutions['grid'];
         this.solutions = grid_solutions['solutions'];
+        for (var player of this.players) {
+          player.score = 0;
+          player.rank = 0;
+          player.found = [];
+        }
 
         console.log('Room ' + this.id + ' - Game #' + this.game + ' - game');
         this.state = 'gaming';
@@ -134,6 +140,6 @@ function newConnection(socket){
 
   socket.on('newWord', function(word, result){
     var score = Player.instances[socket.id].room.checkSolution(word,Player.instances[socket.id]);
-    result(score);
+    result(score, word);
   });
 }

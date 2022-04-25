@@ -26,6 +26,9 @@ class Room {
 		this.linearGrid.push(...this.grid[3]);
 		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+		this.score = 0;
+		this.found = [];
+		this.rankings = [];
 	}
 
 	cleanWord(){
@@ -37,6 +40,7 @@ class Room {
 	checkAnswer(score, word) {
 		if (score > 0) {
 			this.score = score;
+			console.log('word: ' + word);
 			this.found.push(word.toUpperCase());
 		} else if (score == 0) {
 			// already found
@@ -223,6 +227,17 @@ function draw(){
 
 function displayScore(){
 	textWithSprites('Score ' + Room.instance.score, 10, 10, 1, 'LEFT');
+	for (var word of Room.instance.found.sort().sort(function(a, b){return b.length - a.length;})) {
+		textWithSprites(word, 10, 50 + Room.instance.found.indexOf(word)*15, 0.8, 'LEFT');
+		var wordScore = '';
+		if (word.length == 3) wordScore = '1';
+		else if (word.length == 4) wordScore = '1';
+		else if (word.length == 5) wordScore = '2';
+		else if (word.length == 6) wordScore = '3';
+		else if (word.length == 7) wordScore = '5';
+		else if (word.length >= 8) wordScore = '11';
+		textWithSprites(wordScore, 150, 50 + Room.instance.found.indexOf(word)*15, 0.8 , 'RIGHT');
+	}
 }
 
 function windowResized() {
@@ -241,7 +256,7 @@ function keyPressed(){
 		} else if (keyCode == ENTER) {
 			if (inputWord.length <= 2) console.log('3 lettres mini');
 			else {
-				socket.emit('newWord',inputWord, function(answer){Room.instance.checkAnswer(answer,inputWord)});
+				socket.emit('newWord',inputWord, function(answer, word){Room.instance.checkAnswer(answer, word)});
 				Room.instance.cleanWord();
 				inputWord = '';
 			}
