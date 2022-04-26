@@ -13,6 +13,17 @@ class Player {
     this.number = Object.keys(Player.instances).length;
     this.name = 'Anon'+this.number;
   }
+
+  cleanup(){
+    console.log('clean: ' + this.id);
+    console.log('score before: ' + this.score);
+    console.log('found before: ' + this.found);
+    this.score = 0;
+    this.rank = 0;
+    this.found = [];
+    console.log('score after: ' + this.score);
+    console.log('found after: ' + this.found);
+  }
 }
 Player.instances = {};
 
@@ -62,9 +73,7 @@ class Room {
         this.grid = grid_solutions['grid'];
         this.solutions = grid_solutions['solutions'];
         for (var player of this.players) {
-          player.score = 0;
-          player.rank = 0;
-          player.found = [];
+          player.cleanup();
         }
 
         console.log('Room ' + this.id + ' - Game #' + this.game + ' - game');
@@ -127,6 +136,7 @@ function newConnection(socket){
     // 2 join the room
     socket.join(game.id);
     player.room = game;
+    game.players.push(player);
     // 3 returns the room state
     let grid = [];
     let solutions = [];

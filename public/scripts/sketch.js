@@ -29,6 +29,8 @@ class Room {
 		this.score = 0;
 		this.found = [];
 		this.rankings = [];
+
+		console.log(this.found);
 	}
 
 	cleanWord(){
@@ -39,8 +41,9 @@ class Room {
 
 	checkAnswer(score, word) {
 		if (score > 0) {
-			this.score = score;
+			console.log('score: ' + score);
 			console.log('word: ' + word);
+			this.score = score;
 			this.found.push(word.toUpperCase());
 		} else if (score == 0) {
 			// already found
@@ -118,11 +121,7 @@ class Room {
 		}
 	}
 
-	displayPlayerInfo(){
-		
-	}
-
-	displayTop10(){
+	displayRanks(){
 
 	}
 }
@@ -253,14 +252,32 @@ function keyPressed(){
 		if (keyCode == BACKSPACE){
 			inputWord = inputWord.substring(0, inputWord.length - 1);
 			if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
-		} else if (keyCode == ENTER) {
+		} 
+		//else if (keyCode == ENTER) {
+		//	if (inputWord.length <= 2) console.log('3 lettres mini');
+		//	else {
+		//		socket.emit('newWord',inputWord, function(answer, word){Room.instance.checkAnswer(answer, word)});
+		//		Room.instance.cleanWord();
+		//		inputWord = '';
+		//	}
+		//} 
+		//else if (inputWord.length < 16 && [DELETE,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
+		//	inputWord += key;
+		//	Room.instance.checkLettersToHighlight(inputWord);
+		//}
+	}
+}
+
+function keyTyped(){
+	if (Room.instance != undefined && Room.instance.state == 'gaming') {
+		if (keyCode == ENTER) {
 			if (inputWord.length <= 2) console.log('3 lettres mini');
 			else {
 				socket.emit('newWord',inputWord, function(answer, word){Room.instance.checkAnswer(answer, word)});
 				Room.instance.cleanWord();
 				inputWord = '';
 			}
-		} else if (inputWord.length < 16 && [DELETE,RETURN,TAB,ESCAPE,SHIFT,CONTROL,OPTION,ALT,UP_ARROW,DOWN_ARROW,LEFT_ARROW,RIGHT_ARROW].indexOf(keyCode) == -1) {
+		} else if (inputWord.length < 16) {
 			inputWord += key;
 			Room.instance.checkLettersToHighlight(inputWord);
 		}
