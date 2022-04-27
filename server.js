@@ -15,14 +15,9 @@ class Player {
   }
 
   cleanup(){
-    console.log('clean: ' + this.id);
-    console.log('score before: ' + this.score);
-    console.log('found before: ' + this.found);
     this.score = 0;
     this.rank = 0;
     this.found = [];
-    console.log('score after: ' + this.score);
-    console.log('found after: ' + this.found);
   }
 }
 Player.instances = {};
@@ -41,6 +36,16 @@ class Room {
     Room.instances.push(this);
 
     this.mainLoop();
+  }
+
+  ranks(){
+    var playerScore = {};
+    for (var player of this.players) {
+      playerScore[player.name] = player.score; 
+    }
+    var players = Object.keys(playerScore).sort(function(a, b){return playerScore[b] - playerScore[a];});
+    var scores = Object.values(playerScore).sort().reverse();
+    return [players, scores];
   }
 
   checkSolution(word, player){
@@ -79,21 +84,32 @@ class Room {
         console.log('Room ' + this.id + ' - Game #' + this.game + ' - game');
         this.state = 'gaming';
         io.sockets.in(this.id).emit('game', this.game, this.grid);
-const intervalObj = setInterval(() => {
-  console.log(this.game + ' interviewing the interval');
-}, 1000);
+        var t1 = gameTime;
+        const gameCountdown = setInterval(() => {
+          t1--;
+          var [players, scores] = this.ranks();
+          io.sockets.in(this.id).emit('countdown', t1, players, scores);
+        }, 1000);
         var phase1 = setTimeout(() => {
           // compute results
           // emit results to the room
+          clearInterval(gameCountdown);
+          t1 = gameTime;
+          var t2 = resultTime;
+          const resultCountdown = setInterval(() => {
+            t2--;
+            io.sockets.in(this.id).emit('countdown', t2);
+          }, 1000);
           console.log('Room ' + this.id + ' - Game #' + this.game + ' - results');
           this.state = 'ending';
           io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
           var phase2 = setTimeout(() => {
             // reset timers
-clearInterval(intervalObj);
+            clearInterval(resultCountdown);
+            t2 = resultTime;
             loop.refresh();
-          }, 15000); // display solutions duration
-        }, 15000); // game duration
+          }, resultTime*1000); // display solutions duration
+        }, gameTime*1000); // game duration
       },0);
   }
 }
@@ -115,6 +131,8 @@ var io = socket(server);
 io.sockets.on('connection', newConnection);
 
 var game = new Room();
+var gameTime = 150;
+var resultTime = 15;
 
 function newConnection(socket){
   var player = new Player(socket.id);
@@ -149,7 +167,7 @@ function newConnection(socket){
       solutions = game.solutions;
       grid = game.grid;
     }
-    welcome(game.id, game.state, game.game, grid, solutions);
+    welcome(game.id, game.state, game.game, grid, solutions, playerName);
   });
 
   socket.on('newWord', function(word, result){
