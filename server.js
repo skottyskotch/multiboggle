@@ -79,6 +79,9 @@ class Room {
         console.log('Room ' + this.id + ' - Game #' + this.game + ' - game');
         this.state = 'gaming';
         io.sockets.in(this.id).emit('game', this.game, this.grid);
+const intervalObj = setInterval(() => {
+  console.log(this.game + ' interviewing the interval');
+}, 1000);
         var phase1 = setTimeout(() => {
           // compute results
           // emit results to the room
@@ -87,9 +90,10 @@ class Room {
           io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
           var phase2 = setTimeout(() => {
             // reset timers
+clearInterval(intervalObj);
             loop.refresh();
-          }, 1000); // display solutions duration
-        }, 150000); // game duration
+          }, 15000); // display solutions duration
+        }, 15000); // game duration
       },0);
   }
 }
