@@ -23,6 +23,7 @@ function initDict(){
 	var wordDict = {};
 	for (const word of data.split('\n')){
 		if (word.length > 2 && word.length < 17 && word.indexOf('-') == -1) {
+			if (word.slice(-1) == '\r') word = word.slice(0,-1);
 			if (wordDict[word.length] != undefined) wordDict[word.length].push(word.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase());
 			else wordDict[word.length] = [word.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase()];
 		}
