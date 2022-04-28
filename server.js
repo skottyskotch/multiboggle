@@ -1,4 +1,4 @@
-var Boggle = require ('./Boggle');
+var Boggle = require ('./boggle');
 
 // class Player
 class Player {
