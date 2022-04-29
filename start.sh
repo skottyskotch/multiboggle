@@ -13,7 +13,7 @@ git pull
 LAST_COMMIT=$(git log -1 | sed '$!d')
 
 #update the current server IP address for the client
-cp update/scripts/sketch.js update/scripts/sketch.tmp
+cp public/scripts/sketch.js public/scripts/sketch.tmp
 sed 's/http:\/\/.*:3000/http:\/\/'$EXT_IP':3000/' public/scripts/sketch.tmp > public/scripts/sketch.js
 rm blast/website/scripts/sketch.tmp
 
