@@ -13,9 +13,9 @@ git pull
 LAST_COMMIT=$(git log -1 | sed '$!d')
 
 #update the current server IP address for the client
-cp public/scripts/sketch.js public/scripts/sketch.tmp
-sed 's/http:\/\/.*:3000/http:\/\/'$EXT_IP':3000/' public/scripts/sketch.tmp > public/scripts/sketch.js
-rm blast/website/scripts/sketch.tmp
+cp /srv/www/boggle/public/scripts/sketch.js /srv/www/boggle/public/scripts/sketch.tmp
+sed 's/http:\/\/.*:3000/http:\/\/'$EXT_IP':3000/' /srv/www/boggle/public/scripts/sketch.tmp > /srv/www/boggle/public/scripts/sketch.js
+rm /srv/www/boggle/public/scripts/sketch.tmp
 
 #post info on discord
 curl -H "Content-Type: application/json" -X POST -d '{"username": "server", "content": "Game started at http://'$EXT_IP':3000"}' https://discord.com/api/webhooks/969705657672536084/wJi5AJXU5VTGX0coTKp3ukQEa0DQTqV7_Raw_vW2meQtgNAEhwI5uNXr0X4qjvpULMWR
