@@ -1,4 +1,5 @@
  #!/bin/sh
+cd /srv/www/boggle
 
 #dl dependencies if needed
 if [ ! -d node_modules ]; then
