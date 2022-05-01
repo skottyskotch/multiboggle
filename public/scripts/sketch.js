@@ -44,12 +44,12 @@ class Room {
 	computeTotalScore(){
 		var totalScore = 0;
 		for (var word of this.solutions){
-			if (word == 3) totalScore += 1;
-			else if (word == 4) totalScore += 1;
-			else if (word == 5) totalScore += 2;
-			else if (word == 6) totalScore += 3;
-			else if (word == 7) totalScore += 5;
-			else if (word >= 8) totalScore += 11;
+			if (word.length == 3) totalScore += 1;
+			else if (word.length == 4) totalScore += 1;
+			else if (word.length == 5) totalScore += 2;
+			else if (word.length == 6) totalScore += 3;
+			else if (word.length == 7) totalScore += 5;
+			else if (word.length >= 8) totalScore += 11;
 		}
 		this.totalScore = totalScore;
 	}
