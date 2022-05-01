@@ -19,6 +19,12 @@ class Player {
     this.rank = 0;
     this.found = [];
   }
+
+  disconnection(){
+    // remove player from playerList of his map
+    if (this.room != undefined) delete this.room.players[this.id];
+    delete Player.instances[this.id];
+  }
 }
 Player.instances = {};
 
@@ -27,7 +33,7 @@ class Room {
     // new room is created as soon as the first player enters
     this.id = Room.id++;
     this.maxPlayers = 10;
-    this.players = [];
+    this.players = {};
     this.game = 0;
     this.state = 'starting'; // [starting, rolling, gaming, ending]
     this.grid = [];
@@ -40,7 +46,7 @@ class Room {
 
   ranks(){
     var playerScore = {};
-    for (var player of this.players) {
+    for (var player of Object.values(this.players)) {
       playerScore[player.name] = player.score; 
     }
     var players = Object.keys(playerScore).sort(function(a, b){return playerScore[b] - playerScore[a];});
@@ -77,7 +83,7 @@ class Room {
         var grid_solutions = Boggle.boggle(); //  return {'grid':grid, 'solutions': solutions};
         this.grid = grid_solutions['grid'];
         this.solutions = grid_solutions['solutions'];
-        for (var player of this.players) {
+        for (var player of Object.values(this.players)) {
           player.cleanup();
         }
 
@@ -148,7 +154,7 @@ function newConnection(socket){
     else {
       var noRoom = true;
       for (var eachRoom of Room.instances){
-        if (eachRoom.players.length < eachRoom.maxPlayers) {
+        if (Object.keys(eachRoom.players).length < eachRoom.maxPlayers) {
           game = eachRoom;
           noRoom = false;
         }
@@ -159,7 +165,7 @@ function newConnection(socket){
     // 2 join the room
     socket.join(game.id);
     player.room = game;
-    game.players.push(player);
+    game.players[socket.id] = player;
     // 3 returns the room state
     let grid = [];
     let solutions = [];
@@ -174,5 +180,9 @@ function newConnection(socket){
   socket.on('newWord', function(word, result){
     var score = Player.instances[socket.id].room.checkSolution(word,Player.instances[socket.id]);
     result(score, word);
+  });
+
+  socket.on('disconnect', function(){
+    let player = Player.instances[socket.id].disconnection();
   });
 }
