@@ -14,6 +14,7 @@ class Room {
 		this.solutions = solutions;
 		this.found = [];
 		this.score = 0;
+		this.totalScore = 0;
 		this.time = 0;
 		this.update(grid);
 		Room.instance = this;
@@ -29,6 +30,7 @@ class Room {
 		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 		this.score = 0;
+		this.totalScore = 0;
 		this.found = [];
 		this.rankings = [[],[]];
 	}
@@ -37,6 +39,19 @@ class Room {
 		this.highlightedLetters = [];
 		this.possibilitiesHistory = [this.linearGrid,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
 		this.possibilitiesHistoryByIndex = [[[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15]],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+	}
+
+	computeTotalScore(){
+		var totalScore = 0;
+		for (var word of this.solutions){
+			if (word == 3) totalScore += 1;
+			else if (word == 4) totalScore += 1;
+			else if (word == 5) totalScore += 2;
+			else if (word == 6) totalScore += 3;
+			else if (word == 7) totalScore += 5;
+			else if (word >= 8) totalScore += 11;
+		}
+		this.totalScore = totalScore;
 	}
 
 	checkAnswer(score, word) {
@@ -55,7 +70,7 @@ class Room {
 		// search inputWord in possibilitiesHistory[inputWord.length - 1]
 		var foundInPreviousPossible = this.findWordInPossible(inputWord);
 		// create new possibilities
-		var possibilitiesArray = this.findNewPossibilities(foundInPreviousPossible, inputWord);
+		if(foundInPreviousPossible.length != 0) this.findNewPossibilities(foundInPreviousPossible, inputWord);
 	}
 
 	findWordInPossible(inputWord){
@@ -77,7 +92,7 @@ class Room {
 			var resultForOneElement = [];
 			var resultForOneElementIndex = [];
 			var word = this.possibilitiesHistory[inputWord.length-1][wordIndex];
-			var wordByIndex = this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex];
+			var wordByIndex = [...this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex]];
 			for (var letterIndex of hashNeighbors[wordByIndex.slice(-1)]) {
 				if (wordByIndex.indexOf(letterIndex) == -1) {
 					resultForOneElementIndex = this.possibilitiesHistoryByIndex[inputWord.length-1][wordIndex].slice();
@@ -90,8 +105,7 @@ class Room {
 		}
 		this.possibilitiesHistoryByIndex[inputWord.length] = resultHistoryIndex;
 		this.possibilitiesHistory[inputWord.length] = resultHistory;
-		this.highlightedLetters = foundInPreviousPossible[0];
-		this.highlightedLetters = this.possibilitiesHistoryByIndex[inputWord.length -1][foundInPreviousPossible[0]];
+		this.highlightedLetters = [...this.possibilitiesHistoryByIndex[inputWord.length -1][foundInPreviousPossible[0]]];
 		if (this.highlightedLetters == undefined) this.highlightedLetters = [];
 	}
 
@@ -139,7 +153,7 @@ class Room {
 	}
 
 	displayRanks(){
-		textWithSprites('Ranks', width - 10, 10, 1, 'RIGHT');
+		textWithSprites('Classement', width - 10, 10, 1, 'RIGHT');
 		for (var i = 0; i < this.rankings[0].length; i++){
 			textWithSprites(this.rankings[1][i].toString(), width - 10, 50 + i*15, 1, 'RIGHT');
 			textWithSprites(this.rankings[0][i], width - 50, 50 + i*15, 1, 'RIGHT');
@@ -147,19 +161,22 @@ class Room {
 	}
 
 	displaySolutions(){
-		textWithSprites('Solutions', width - 10, 10, 1, 'RIGHT');
 		for (var i = 0; i < this.solutions.length; i++){
-			textWithSprites(this.solutions[i], width - 50, 50 + i*15, 1, 'RIGHT');
-			var wordScore = '';
-			if (this.solutions[i].length == 3) wordScore = '1';
-			else if (this.solutions[i].length == 4) wordScore = '1';
-			else if (this.solutions[i].length == 5) wordScore = '2';
-			else if (this.solutions[i].length == 6) wordScore = '3';
-			else if (this.solutions[i].length == 7) wordScore = '5';
-			else if (this.solutions[i].length >= 8) wordScore = '11';
-			textWithSprites(wordScore, width - 10, 50 + i*15, 1, 'RIGHT');
+			if (this.found.indexOf(this.solutions[i]) == -1) tint(100,100,100);
+			else noTint()
+			textWithSprites(this.solutions[i], 10, 50 + i*15, 0.8, 'LEFT');
+			var wordScore = 0;
+			if (this.solutions[i].length == 3) wordScore = 1;
+			else if (this.solutions[i].length == 4) wordScore = 1;
+			else if (this.solutions[i].length == 5) wordScore = 2;
+			else if (this.solutions[i].length == 6) wordScore = 3;
+			else if (this.solutions[i].length == 7) wordScore = 5;
+			else if (this.solutions[i].length >= 8) wordScore = 11;
+			textWithSprites(wordScore.toString(), 150, 50 + i*15, 0.8, 'LEFT');
 		}
-
+		noTint();
+		textWithSprites('Score', 10, 10, 1, 'LEFT');
+		textWithSprites(this.totalScore.toString(), 150, 10, 1, 'LEFT');
 	}
 }
 Room.instance = undefined;
@@ -216,6 +233,7 @@ function setup(){
 		if (Room.instance != undefined) {
 			Room.instance.state = 'ending';
 			Room.instance.solutions = solutions;
+			Room.instance.computeTotalScore();
 			Room.instance.game = game;
 		}
 	});
@@ -248,8 +266,8 @@ function draw(){
 			let y = height * 0.2;
 			textWithSprites('partie ' + '#' + Room.instance.game, x, y, 1, 'CENTER');
 			Room.instance.displayGrid();
-			stroke('cyan');
-			fill('cyan');
+			stroke('white');
+			fill('white');
 			textFont('futura');
 			textSize(30);
 			x = width/2 - 95;
@@ -263,10 +281,12 @@ function draw(){
 			let x = 0.5 * width;
 			let y = height * 0.2;
 			textWithSprites('resultat ' + '#' + Room.instance.game, x, y, 1, 'CENTER');
+			textWithSprites(Room.instance.playerName + ' ' + (Room.instance.rankings[0].indexOf(Room.instance.playerName) + 1).toString() + '/' + Room.instance.rankings[0].length.toString(), x, y + 20, 1, 'CENTER');
 			Room.instance.displayGrid();
 			inputWord = '';
 			Room.instance.displayTime();
 			Room.instance.displaySolutions();
+			Room.instance.displayRanks();
 		}
 	}
 }
@@ -284,6 +304,7 @@ function keyPressed(){
 		if (keyCode == BACKSPACE){
 			inputWord = inputWord.substring(0, inputWord.length - 1);
 			if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
+			if (inputWord.length > 0) Room.instance.checkLettersToHighlight(inputWord);
 		}
 	}
 }

@@ -44,7 +44,7 @@ class Room {
       playerScore[player.name] = player.score; 
     }
     var players = Object.keys(playerScore).sort(function(a, b){return playerScore[b] - playerScore[a];});
-    var scores = Object.values(playerScore).sort().reverse();
+    var scores = Object.values(playerScore).sort((a,b)=>b-a);
     return [players, scores];
   }
 
@@ -98,7 +98,8 @@ class Room {
           var t2 = resultTime;
           const resultCountdown = setInterval(() => {
             t2--;
-            io.sockets.in(this.id).emit('countdown', t2);
+            var [players, scores] = this.ranks();
+            io.sockets.in(this.id).emit('countdown', t2, players, scores);
           }, 1000);
           console.log('Room ' + this.id + ' - Game #' + this.game + ' - results');
           this.state = 'ending';
