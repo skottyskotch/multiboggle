@@ -175,7 +175,7 @@ class Room {
 			textWithSprites(wordScore.toString(), 150, 50 + i*15, 0.8, 'LEFT');
 		}
 		noTint();
-		textWithSprites('Score', 10, 10, 1, 'LEFT');
+		textWithSprites('Total', 10, 10, 1, 'LEFT');
 		textWithSprites(this.totalScore.toString(), 150, 10, 1, 'LEFT');
 	}
 }
