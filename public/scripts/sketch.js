@@ -15,6 +15,7 @@ class Room {
 		this.found = [];
 		this.score = 0;
 		this.totalScore = 0;
+		this.lastWinnerIndex = -1;
 		this.time = 0;
 		this.update(grid);
 		Room.instance = this;
@@ -155,6 +156,7 @@ class Room {
 	displayRanks(){
 		textWithSprites('Classement', width - 10, 10, 1, 'RIGHT');
 		for (var i = 0; i < this.rankings[0].length; i++){
+			if (this.lastWinnerIndex != -1 && this.lastWinnerIndex == i) image(crownImage, width - 50 - (this.rankings[0][i].toString().length+1)*16-14, 25 + i*15 + 14, 28, 28);
 			textWithSprites(this.rankings[1][i].toString(), width - 10, 50 + i*15, 1, 'RIGHT');
 			textWithSprites(this.rankings[0][i], width - 50, 50 + i*15, 1, 'RIGHT');
 		}
@@ -183,6 +185,9 @@ Room.instance = undefined;
 
 function preload() {
 	fontSpriteSheet 		= loadImage("images/pixel_font_16x6.png");
+	crownImage 				= loadImage("images/crown1.png");
+	//crownImage 				= loadImage("images/crown2.png");
+	//crownImage 				= loadImage("images/crown3.png");		
 }
 
 function setup(){
@@ -237,10 +242,11 @@ function setup(){
 			Room.instance.game = game;
 		}
 	});
-	socket.on('countdown', (time, players, scores) => {
+	socket.on('countdown', (time, players, scores, lastWinnerIndex) => {
 		if (Room.instance != undefined) {
 			Room.instance.time = time;
 			Room.instance.rankings = [players,scores];
+			Room.instance.lastWinnerIndex = lastWinnerIndex;
 		}
 	});
 }
@@ -318,7 +324,7 @@ function keyTyped(){
 				Room.instance.cleanWord();
 				inputWord = '';
 			}
-		} else if (inputWord.length < 16) {
+		} else if (keyCode != BACKSPACE && inputWord.length < 16) {
 			inputWord += key;
 			Room.instance.checkLettersToHighlight(inputWord);
 		}

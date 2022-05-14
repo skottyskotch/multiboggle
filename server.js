@@ -35,10 +35,12 @@ class Room {
     this.maxPlayers = 10;
     this.players = {};
     this.game = 0;
+    this.lastWinner = undefined;
     this.state = 'starting'; // [starting, rolling, gaming, ending]
     this.grid = [];
     this.solutions = [];
     this.gameTimer = undefined;
+    this.lastWinner = undefined;
     Room.instances.push(this);
 
     this.mainLoop();
@@ -47,11 +49,22 @@ class Room {
   ranks(){
     var playerScore = {};
     for (var player of Object.values(this.players)) {
-      playerScore[player.name] = player.score; 
+      playerScore[player.id] = player.score; 
     }
-    var players = Object.keys(playerScore).sort(function(a, b){return playerScore[b] - playerScore[a];});
     var scores = Object.values(playerScore).sort((a,b)=>b-a);
-    return [players, scores];
+    var playerIds = Object.keys(playerScore).sort(function(a, b){return playerScore[b] - playerScore[a];});
+    var playerNames = [];
+    for (var playerId of playerIds) {
+      playerNames.push(this.players[playerId].name); 
+    }
+
+    var lastWinnerIndex = -1;
+    if (this.lastWinner != undefined) lastWinnerIndex = playerIds.indexOf(this.lastWinner);
+   return [playerNames, scores, lastWinnerIndex];
+  }
+
+  setLastWinner(){
+    this.lastWinner = Object.keys(this.players).sort((a,b) => {return this.players[b].score - this.players[a].score})[0];
   }
 
   checkSolution(word, player){
@@ -93,8 +106,8 @@ class Room {
         var t1 = gameTime;
         const gameCountdown = setInterval(() => {
           t1--;
-          var [players, scores] = this.ranks();
-          io.sockets.in(this.id).emit('countdown', t1, players, scores);
+          var [playerNames, scores, lastWinnerIndex] = this.ranks();
+          io.sockets.in(this.id).emit('countdown', t1, playerNames, scores, lastWinnerIndex);
         }, 1000);
         var phase1 = setTimeout(() => {
           // compute results
@@ -104,11 +117,12 @@ class Room {
           var t2 = resultTime;
           const resultCountdown = setInterval(() => {
             t2--;
-            var [players, scores] = this.ranks();
-            io.sockets.in(this.id).emit('countdown', t2, players, scores);
+            var [playerNames, scores, lastWinnerIndex] = this.ranks();
+            io.sockets.in(this.id).emit('countdown', t2, playerNames, scores, lastWinnerIndex);
           }, 1000);
           console.log('Room ' + this.id + ' - Game #' + this.game + ' - results');
           this.state = 'ending';
+          this.setLastWinner();
           io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
           var phase2 = setTimeout(() => {
             // reset timers
