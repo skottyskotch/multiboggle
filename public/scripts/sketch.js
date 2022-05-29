@@ -56,14 +56,25 @@ class Room {
 	}
 
 	checkAnswer(score, word) {
+		var answerMessage = '';
+		var answerColor = [204,51,0];
 		if (score > 0) {
+			answerColor = [51,153,255];
 			this.score = score;
 			this.found.push(word.toUpperCase());
+			answerMessage = word.toUpperCase() + '   ' + str(score);
 		} else if (score == 0) {
 			// already found
+			answerMessage = word.toUpperCase() + ' déjà trouvé';
+		} else if (inputWord.toUpperCase() != Room.instance.highlightedLetters.map((i) => Room.instance.linearGrid[i]).join('').toUpperCase()){
+			answerMessage = word.toUpperCase() + ' pas dans la grille';
 		} else if (score == -1) {
 			// not a solution
+			answerMessage = word.toUpperCase() + ' pas dans le dictionnaire'
 		}
+		Room.instance.cleanWord();
+		inputWord = '';
+		return [answerMessage,answerColor];
 	}
 
 	checkLettersToHighlight(inputWord){
@@ -116,7 +127,6 @@ class Room {
 		var offset = 5;
 		for (var i = 0; i < 4; i++){
 			for (var j = 0; j < 4; j++){
-				
 				if (this.state == 'gaming') {
 					stroke(255);
 					if (this.highlightedLetters.indexOf(j*4+i) != -1) fill(100);
@@ -129,15 +139,15 @@ class Room {
 				let x = width/2 -(squareLength*4+offset*3)/2 +(squareLength+offset)*i;
 				let y = height/2-(squareLength*4+offset*3)/2 +(squareLength+offset)*j;
 				square(x, y, squareLength);
-				if (this.grid != 'ending') textWithSprites(this.grid[j][i], x+squareLength/2, y+squareLength/4, 2, 'CENTER');
+				if (this.grid != 'ending') textWithSprites(this.grid[j][i], x+squareLength/2, y+squareLength/4, textZoom*2, 'CENTER');
 			}
 		}
 	}
 
 	displayScore(){
-		textWithSprites(this.playerName + ' ' + this.score, 10, 10, 1, 'LEFT');
+		textWithSprites(this.playerName + ' ' + this.score, 10, 10, textZoom*1, 'LEFT');
 		for (var word of this.found.sort().sort(function(a, b){return b.length - a.length;})) {
-			textWithSprites(word, 10, 50 + this.found.indexOf(word)*15, 0.8, 'LEFT');
+			textWithSprites(word, 10, 50 + this.found.indexOf(word)*15, textZoom*0.8, 'LEFT');
 			var wordScore = '';
 			if (word.length == 3) wordScore = '1';
 			else if (word.length == 4) wordScore = '1';
@@ -145,20 +155,20 @@ class Room {
 			else if (word.length == 6) wordScore = '3';
 			else if (word.length == 7) wordScore = '5';
 			else if (word.length >= 8) wordScore = '11';
-			textWithSprites(wordScore, 150, 50 + this.found.indexOf(word)*15, 0.8 , 'RIGHT');
+			textWithSprites(wordScore, 150, 50 + this.found.indexOf(word)*15, textZoom*0.8 , 'RIGHT');
 		}
 	}
 
 	displayTime(){
-		textWithSprites(this.time.toString(), width/2, 10, 1, 'CENTER');
+		textWithSprites(this.time.toString(), width/2, 10, textZoom*1, 'CENTER');
 	}
 
 	displayRanks(){
-		textWithSprites('Classement', width - 10, 10, 1, 'RIGHT');
+		textWithSprites('Classement', width - 10, 10, textZoom*1, 'RIGHT');
 		for (var i = 0; i < this.rankings[0].length; i++){
 			if (this.lastWinnerIndex != -1 && this.lastWinnerIndex == i) image(crownImage, width - 50 - (this.rankings[0][i].toString().length+1)*16-14, 25 + i*15 + 14, 28, 28);
-			textWithSprites(this.rankings[1][i].toString(), width - 10, 50 + i*15, 1, 'RIGHT');
-			textWithSprites(this.rankings[0][i], width - 50, 50 + i*15, 1, 'RIGHT');
+			textWithSprites(this.rankings[1][i].toString(), width - 10, 50 + i*15, textZoom*1, 'RIGHT');
+			textWithSprites(this.rankings[0][i], width - 50, 50 + i*15, textZoom*1, 'RIGHT');
 		}
 	}
 
@@ -166,7 +176,7 @@ class Room {
 		for (var i = 0; i < this.solutions.length; i++){
 			if (this.found.indexOf(this.solutions[i]) == -1) tint(100,100,100);
 			else noTint()
-			textWithSprites(this.solutions[i], 10, 50 + i*15, 0.8, 'LEFT');
+			textWithSprites(this.solutions[i], 10, 50 + i*15, textZoom*0.8, 'LEFT');
 			var wordScore = 0;
 			if (this.solutions[i].length == 3) wordScore = 1;
 			else if (this.solutions[i].length == 4) wordScore = 1;
@@ -174,16 +184,17 @@ class Room {
 			else if (this.solutions[i].length == 6) wordScore = 3;
 			else if (this.solutions[i].length == 7) wordScore = 5;
 			else if (this.solutions[i].length >= 8) wordScore = 11;
-			textWithSprites(wordScore.toString(), 150, 50 + i*15, 0.8, 'LEFT');
+			textWithSprites(wordScore.toString(), 150, 50 + i*15, textZoom*0.8, 'LEFT');
 		}
 		noTint();
-		textWithSprites('Total', 10, 10, 1, 'LEFT');
-		textWithSprites(this.totalScore.toString(), 150, 10, 1, 'LEFT');
+		textWithSprites('Total', 10, 10, textZoom*1, 'LEFT');
+		textWithSprites(this.totalScore.toString(), 150, 10, textZoom*1, 'LEFT');
 	}
 }
 Room.instance = undefined;
 
 function preload() {
+	//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
 	fontSpriteSheet 		= loadImage("images/pixel_font_16x6.png");
 	crownImage 				= loadImage("images/crown1.png");
 	//crownImage 				= loadImage("images/crown2.png");
@@ -191,13 +202,17 @@ function preload() {
 }
 
 function setup(){
+	textZoom = 0.8;
 	fontSprites = initSprite(fontSpriteSheet,16,6);
+	//fontSprites = initSprite(fontSpriteSheet,15,8);
 	fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
 	createCanvas(windowWidth,windowHeight);
 	//let inputName = enterYourName();
 	inputName = createInput();
 	inputName.center();
 	inputWord = '';
+	answerMessage = '';
+	answerColor = [0,0,0];
 	hashNeighbors = {	0 :[   1 ,      4 ,5                               ],
 						1 :[0 ,   2 ,   4 ,5 ,6                            ],
 						2 :[   1 ,   3 ,   5 ,6 ,7                         ],
@@ -256,21 +271,21 @@ function draw(){
 	if (Room.instance == undefined) {
 		let x = 0.5*width;
 		let y = height * 0.25 - 20;
-		textWithSprites('MASSIVE BOGGLE', x, y, 1.8, 'CENTER');
+		textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER');
 		y = height * 0.5 - 40;
-		textWithSprites('Enter your name', x, y, 1, 'CENTER');
+		textWithSprites('Enter your name', x, y, textZoom*1, 'CENTER');
 	} else {
 		let x = 0.5*width;
 		let y = height * 0.1;
-		textWithSprites('MASSIVE BOGGLE', x, y, 1.8, 'CENTER');
+		textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER');
 		if (Room.instance.state == 'rolling') {
 			let x = 0.5*width;
 			let y = height * 0.2;
-			textWithSprites('tirage #' + Room.instance.game + '...', x, y, 1, 'CENTER');
+			textWithSprites('tirage #' + Room.instance.game + '...', x, y, textZoom*1, 'CENTER');
 		} else if (Room.instance.state == 'gaming') {
 			let x = 0.5*width;
 			let y = height * 0.2;
-			textWithSprites('partie ' + '#' + Room.instance.game, x, y, 1, 'CENTER');
+			textWithSprites('partie ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER')
 			Room.instance.displayGrid();
 			stroke('white');
 			fill('white');
@@ -278,18 +293,26 @@ function draw(){
 			textSize(30);
 			x = width/2 - 95;
 			y = height*0.8;
+			textAlign(LEFT);
 			text('>', x-20, height*0.8, width-40, height-40);
 			text(inputWord, x, y, width-40, height-40);
+			textAlign(CENTER);
+			textSize(15)
+			fill(...answerColor);
+			stroke(...answerColor);
+			text(answerMessage, width/2, height*0.9);
+			//textWithSprites(answerMessage , width/2, height*0.9, textZoom*0.8, 'CENTER')
 			Room.instance.displayScore();
 			Room.instance.displayTime();
 			Room.instance.displayRanks();
 		} else if (Room.instance.state == 'ending') {
 			let x = 0.5 * width;
 			let y = height * 0.2;
-			textWithSprites('resultat ' + '#' + Room.instance.game, x, y, 1, 'CENTER');
-			textWithSprites(Room.instance.playerName + ' ' + (Room.instance.rankings[0].indexOf(Room.instance.playerName) + 1).toString() + '/' + Room.instance.rankings[0].length.toString(), x, y + 20, 1, 'CENTER');
+			textWithSprites('resultat ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER');
+			textWithSprites(Room.instance.playerName + ' ' + (Room.instance.rankings[0].indexOf(Room.instance.playerName) + 1).toString() + '/' + Room.instance.rankings[0].length.toString(), x, y + 20, textZoom*1, 'CENTER');
 			Room.instance.displayGrid();
 			inputWord = '';
+			answerMessage = '';
 			Room.instance.displayTime();
 			Room.instance.displaySolutions();
 			Room.instance.displayRanks();
@@ -319,11 +342,7 @@ function keyTyped(){
 	if (Room.instance != undefined && Room.instance.state == 'gaming') {
 		if (keyCode == ENTER) {
 			if (inputWord.length <= 2) console.log('3 lettres mini');
-			else {
-				socket.emit('newWord',inputWord, function(answer, word){Room.instance.checkAnswer(answer, word)});
-				Room.instance.cleanWord();
-				inputWord = '';
-			}
+			else socket.emit('newWord',inputWord, function(answer, word){[answerMessage, answerColor] = Room.instance.checkAnswer(answer, word)});
 		} else if (keyCode != BACKSPACE && inputWord.length < 16) {
 			inputWord += key;
 			Room.instance.checkLettersToHighlight(inputWord);
