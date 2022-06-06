@@ -13,14 +13,14 @@ function initSprite(spriteSheet, wDIM, hDIM) {
 	return imageList;
 }
 
-function textWithSprites(string, x, y, ratio, mode){
+function textWithSprites(string, x, y, ratio, mode, sketch){
 	let offset = 0;
 	let reverse = 0;
 	let textToTypeWithImage = arrayTextToType(string);
 	if (mode == 'CENTER') offset = - textToTypeWithImage.length*8*ratio;
 	if (mode == 'RIGHT') reverse = textToTypeWithImage.length;
 	for (let i = 0; i < textToTypeWithImage.length; i++){
-		image(textToTypeWithImage[i], x + offset + 16*ratio*(i-reverse), y, 16*ratio, 16*ratio);
+		sketch.image(textToTypeWithImage[i], x + offset + 16*ratio*(i-reverse), y, 16*ratio, 16*ratio);
 	}
 }
 

@@ -55,14 +55,14 @@ class Room {
 		this.totalScore = totalScore;
 	}
 
-	checkAnswer(score, word) {
+	checkAnswer(score, word, sketch) {
 		var answerMessage = '';
 		var answerColor = [204,51,0];
 		if (score > 0) {
 			answerColor = [51,153,255];
 			this.score = score;
 			this.found.push(word.toUpperCase());
-			answerMessage = word.toUpperCase() + '   ' + str(score);
+			answerMessage = word.toUpperCase() + '   ' + sketch.str(score);
 		} else if (score == 0) {
 			// already found
 			answerMessage = word.toUpperCase() + ' déjà trouvé';
@@ -121,33 +121,33 @@ class Room {
 		if (this.highlightedLetters == undefined) this.highlightedLetters = [];
 	}
 
-	displayGrid(){
+	displayGrid(sketch){
 		// display the grid
 		var squareLength = 50;
 		var offset = 5;
 		for (var i = 0; i < 4; i++){
 			for (var j = 0; j < 4; j++){
 				if (this.state == 'gaming') {
-					stroke(255);
-					if (this.highlightedLetters.indexOf(j*4+i) != -1) fill(100);
-					else fill(0);
+					sketch.stroke(255);
+					if (this.highlightedLetters.indexOf(j*4+i) != -1) sketch.fill(100);
+					else sketch.fill(0);
 				}
 				if (Room.instance.state == 'ending') {
-					stroke(125)
-					fill(25);
+					sketch.stroke(125)
+					sketch.fill(25);
 				}
-				let x = width/2 -(squareLength*4+offset*3)/2 +(squareLength+offset)*i;
-				let y = height/2-(squareLength*4+offset*3)/2 +(squareLength+offset)*j;
-				square(x, y, squareLength);
-				if (this.grid != 'ending') textWithSprites(this.grid[j][i], x+squareLength/2, y+squareLength/4, textZoom*2, 'CENTER');
+				let x = sketch.width/2 -(squareLength*4+offset*3)/2 +(squareLength+offset)*i;
+				let y = sketch.height/2-(squareLength*4+offset*3)/2 +(squareLength+offset)*j;
+				sketch.square(x, y, squareLength);
+				if (this.grid != 'ending') textWithSprites(this.grid[j][i], x+squareLength/2, y+squareLength/4, textZoom*2, 'CENTER', sketch);
 			}
 		}
 	}
 
-	displayScore(){
-		textWithSprites(this.playerName + ' ' + this.score, 10, 10, textZoom*1, 'LEFT');
+	displayScore(sketch){
+		textWithSprites(this.playerName + ' ' + this.score, 10, 10, textZoom*1, 'LEFT', sketch);
 		for (var word of this.found.sort().sort(function(a, b){return b.length - a.length;})) {
-			textWithSprites(word, 10, 50 + this.found.indexOf(word)*15, textZoom*0.8, 'LEFT');
+			textWithSprites(word, 10, 50 + this.found.indexOf(word)*15, textZoom*0.8, 'LEFT', sketch);
 			var wordScore = '';
 			if (word.length == 3) wordScore = '1';
 			else if (word.length == 4) wordScore = '1';
@@ -155,28 +155,28 @@ class Room {
 			else if (word.length == 6) wordScore = '3';
 			else if (word.length == 7) wordScore = '5';
 			else if (word.length >= 8) wordScore = '11';
-			textWithSprites(wordScore, 150, 50 + this.found.indexOf(word)*15, textZoom*0.8 , 'RIGHT');
+			textWithSprites(wordScore, 150, 50 + this.found.indexOf(word)*15, textZoom*0.8 , 'RIGHT', sketch);
 		}
 	}
 
-	displayTime(){
-		textWithSprites(this.time.toString(), width/2, 10, textZoom*1, 'CENTER');
+	displayTime(sketch){
+		textWithSprites(this.time.toString(), sketch.width/2, 10, textZoom*1, 'CENTER', sketch);
 	}
 
-	displayRanks(){
-		textWithSprites('Classement', width - 10, 10, textZoom*1, 'RIGHT');
+	displayRanks(sketch){
+		textWithSprites('Classement', sketch.width - 10, 10, textZoom*1, 'RIGHT', sketch);
 		for (var i = 0; i < this.rankings[0].length; i++){
-			if (this.lastWinnerIndex != -1 && this.lastWinnerIndex == i) image(crownImage, width - 50 - (this.rankings[0][i].toString().length+1)*16-14, 25 + i*15 + 14, 28, 28);
-			textWithSprites(this.rankings[1][i].toString(), width - 10, 50 + i*15, textZoom*1, 'RIGHT');
-			textWithSprites(this.rankings[0][i], width - 50, 50 + i*15, textZoom*1, 'RIGHT');
+			if (this.lastWinnerIndex != -1 && this.lastWinnerIndex == i) sketch.image(crownImage, sketch.width - 50 - (this.rankings[0][i].toString().length+1)*16-14, 25 + i*15 + 14, 28, 28);
+			textWithSprites(this.rankings[1][i].toString(), sketch.width - 10, 50 + i*15, textZoom*1, 'RIGHT', sketch);
+			textWithSprites(this.rankings[0][i], sketch.width - 50, 50 + i*15, textZoom*1, 'RIGHT', sketch);
 		}
 	}
 
-	displaySolutions(){
+	displaySolutions(sketch){
 		for (var i = 0; i < this.solutions.length; i++){
-			if (this.found.indexOf(this.solutions[i]) == -1) tint(100,100,100);
-			else noTint()
-			textWithSprites(this.solutions[i], 10, 50 + i*15, textZoom*0.8, 'LEFT');
+			if (this.found.indexOf(this.solutions[i]) == -1) sketch.tint(100,100,100);
+			else sketch.noTint()
+			textWithSprites(this.solutions[i], 10, 50 + i*15, textZoom*0.8, 'LEFT', sketch);
 			var wordScore = 0;
 			if (this.solutions[i].length == 3) wordScore = 1;
 			else if (this.solutions[i].length == 4) wordScore = 1;
@@ -184,181 +184,179 @@ class Room {
 			else if (this.solutions[i].length == 6) wordScore = 3;
 			else if (this.solutions[i].length == 7) wordScore = 5;
 			else if (this.solutions[i].length >= 8) wordScore = 11;
-			textWithSprites(wordScore.toString(), 150, 50 + i*15, textZoom*0.8, 'LEFT');
+			textWithSprites(wordScore.toString(), 150, 50 + i*15, textZoom*0.8, 'LEFT', sketch);
 		}
-		noTint();
-		textWithSprites('Total', 10, 10, textZoom*1, 'LEFT');
-		textWithSprites(this.totalScore.toString(), 150, 10, textZoom*1, 'LEFT');
+		sketch.noTint();
+		textWithSprites('Total', 10, 10, textZoom*1, 'LEFT', sketch);
+		textWithSprites(this.totalScore.toString(), 150, 10, textZoom*1, 'LEFT', sketch);
 	}
 }
 Room.instance = undefined;
 
-function preload() {
-	//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
-	fontSpriteSheet 		= loadImage("images/pixel_font_16x6.png");
-	crownImage 				= loadImage("images/crown1.png");
-	//crownImage 				= loadImage("images/crown2.png");
-	//crownImage 				= loadImage("images/crown3.png");		
-}
+const s = ( sketch ) => {
+	sketch.preload = () => {
+		//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
+		fontSpriteSheet 		= sketch.loadImage("images/pixel_font_16x6.png");
+		crownImage 				= sketch.loadImage("images/crown1.png");
+		//crownImage 				= loadImage("images/crown2.png");
+		//crownImage 				= loadImage("images/crown3.png");		
+	};
 
-function setup(){
-	textZoom = 0.8;
-	fontSprites = initSprite(fontSpriteSheet,16,6);
-	//fontSprites = initSprite(fontSpriteSheet,15,8);
-	fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
-	createCanvas(windowWidth,windowHeight);
-	//let inputName = enterYourName();
-	inputName = createInput();
-	inputName.center();
-	inputWord = '';
-	answerMessage = '';
-	answerColor = [0,0,0];
-	hashNeighbors = {	0 :[   1 ,      4 ,5                               ],
-						1 :[0 ,   2 ,   4 ,5 ,6                            ],
-						2 :[   1 ,   3 ,   5 ,6 ,7                         ],
-						3 :[      2,          6 ,7                         ],
-						4 :[0 ,1 ,         5,       8 ,9                   ],
-						5 :[0 ,1 ,2 ,   4 ,   6,    8 ,9 ,10               ],
-						6 :[   1 ,2 ,3 ,   5,    7 ,   9 ,10,11            ],
-						7 :[      2, 3 ,      6,          10,11            ],
-						8 :[            4 ,5,          9 ,      12,13      ],
-						9 :[            4 ,5, 6,    8 ,   10,   12,13,14   ],
-						10:[               5, 6, 7 ,   9 ,   11,   13,14,15],
-						11:[                  6, 7 ,      10,         14,15],
-						12:[                        8 ,9 ,         13      ],
-						13:[                        8 ,9 ,10,   12,   14   ],
-						14:[                           9 ,10,11,   13,   15],
-						15:[                              10,11,      14   ]};
-	playButton = createButton('Play');
-	playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
-	playButton.mousePressed(launchGame);
-
-	socket = io.connect('http://localhost:3000');
-	socket.on('hello', (defaultPlayerName) => {inputName.value(defaultPlayerName);})
-	socket.on('rolling', (game) => {
-		if (Room.instance != undefined) {
-			Room.instance.state = 'rolling';
-			Room.instance.game = game;
-		}
-	});	
-	socket.on('game', (game, grid) => {
-		if (Room.instance != undefined) {
-			Room.instance.state = 'gaming';
-			Room.instance.cleanWord();
-			Room.instance.update(grid);
-			Room.instance.game = game;
-		}
-	});
-	socket.on('solutions', (game, solutions) => {
-		if (Room.instance != undefined) {
-			Room.instance.state = 'ending';
-			Room.instance.solutions = solutions;
-			Room.instance.computeTotalScore();
-			Room.instance.game = game;
-		}
-	});
-	socket.on('countdown', (time, players, scores, lastWinnerIndex) => {
-		if (Room.instance != undefined) {
-			Room.instance.time = time;
-			Room.instance.rankings = [players,scores];
-			Room.instance.lastWinnerIndex = lastWinnerIndex;
-		}
-	});
-}
-
-function draw(){
-	background(0);
-	if (Room.instance == undefined) {
-		let x = 0.5*width;
-		let y = height * 0.25 - 20;
-		textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER');
-		y = height * 0.5 - 40;
-		textWithSprites('Enter your name', x, y, textZoom*1, 'CENTER');
-	} else {
-		let x = 0.5*width;
-		let y = height * 0.1;
-		textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER');
-		if (Room.instance.state == 'rolling') {
-			let x = 0.5*width;
-			let y = height * 0.2;
-			textWithSprites('tirage #' + Room.instance.game + '...', x, y, textZoom*1, 'CENTER');
-		} else if (Room.instance.state == 'gaming') {
-			let x = 0.5*width;
-			let y = height * 0.2;
-			textWithSprites('partie ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER')
-			Room.instance.displayGrid();
-			stroke('white');
-			fill('white');
-			textFont('futura');
-			textSize(30);
-			x = width/2 - 95;
-			y = height*0.8;
-			textAlign(LEFT);
-			text('>', x-20, height*0.8, width-40, height-40);
-			text(inputWord, x, y, width-40, height-40);
-			textAlign(CENTER);
-			textSize(15)
-			fill(...answerColor);
-			stroke(...answerColor);
-			text(answerMessage, width/2, height*0.9);
-			//textWithSprites(answerMessage , width/2, height*0.9, textZoom*0.8, 'CENTER')
-			Room.instance.displayScore();
-			Room.instance.displayTime();
-			Room.instance.displayRanks();
-		} else if (Room.instance.state == 'ending') {
-			let x = 0.5 * width;
-			let y = height * 0.2;
-			textWithSprites('resultat ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER');
-			textWithSprites(Room.instance.playerName + ' ' + (Room.instance.rankings[0].indexOf(Room.instance.playerName) + 1).toString() + '/' + Room.instance.rankings[0].length.toString(), x, y + 20, textZoom*1, 'CENTER');
-			Room.instance.displayGrid();
-			inputWord = '';
-			answerMessage = '';
-			Room.instance.displayTime();
-			Room.instance.displaySolutions();
-			Room.instance.displayRanks();
-		}
-	}
-}
-
-function windowResized() {
-	resizeCanvas(windowWidth, windowHeight);
-	if (Room.instance == undefined) {
+	sketch.setup = () => {
+		textZoom = 0.8;
+		fontSprites = initSprite(fontSpriteSheet,16,6);
+		//fontSprites = initSprite(fontSpriteSheet,15,8);
+		fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
+		sketch.createCanvas(sketch.windowWidth,sketch.windowHeight);
+		//let inputName = enterYourName();
+		inputName = sketch.createInput();
 		inputName.center();
-		playButton.position(width*0.5 - playButton.width*0.5, inputName.position().y + 30);
-	}
-}
+		inputWord = '';
+		answerMessage = '';
+		answerColor = [0,0,0];
+		hashNeighbors = {	0 :[   1 ,      4 ,5                               ],
+							1 :[0 ,   2 ,   4 ,5 ,6                            ],
+							2 :[   1 ,   3 ,   5 ,6 ,7                         ],
+							3 :[      2,          6 ,7                         ],
+							4 :[0 ,1 ,         5,       8 ,9                   ],
+							5 :[0 ,1 ,2 ,   4 ,   6,    8 ,9 ,10               ],
+							6 :[   1 ,2 ,3 ,   5,    7 ,   9 ,10,11            ],
+							7 :[      2, 3 ,      6,          10,11            ],
+							8 :[            4 ,5,          9 ,      12,13      ],
+							9 :[            4 ,5, 6,    8 ,   10,   12,13,14   ],
+							10:[               5, 6, 7 ,   9 ,   11,   13,14,15],
+							11:[                  6, 7 ,      10,         14,15],
+							12:[                        8 ,9 ,         13      ],
+							13:[                        8 ,9 ,10,   12,   14   ],
+							14:[                           9 ,10,11,   13,   15],
+							15:[                              10,11,      14   ]};
+		playButton = sketch.createButton('Play');
+		playButton.position(sketch.width*0.5 - playButton.width*0.5, inputName.position().y + 30);
+		playButton.mousePressed(function() {
+			socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName){
+						// create the map object
+						sketch.removeElements();
+						started = true;
+						Room.instance = new Room(id, state, game, grid, solutions, playerName);
+					});
+			});
 
-function keyPressed(){
-	if (Room.instance != undefined && Room.instance.state == 'gaming') {
-		if (keyCode == BACKSPACE){
-			inputWord = inputWord.substring(0, inputWord.length - 1);
-			if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
-			if (inputWord.length > 0) Room.instance.checkLettersToHighlight(inputWord);
+		socket = io.connect('http://localhost:3000');
+		socket.on('hello', (defaultPlayerName) => {inputName.value(defaultPlayerName);})
+		socket.on('rolling', (game) => {
+			if (Room.instance != undefined) {
+				Room.instance.state = 'rolling';
+				Room.instance.game = game;
+			}
+		});	
+		socket.on('game', (game, grid) => {
+			if (Room.instance != undefined) {
+				Room.instance.state = 'gaming';
+				Room.instance.cleanWord();
+				Room.instance.update(grid);
+				Room.instance.game = game;
+			}
+		});
+		socket.on('solutions', (game, solutions) => {
+			if (Room.instance != undefined) {
+				Room.instance.state = 'ending';
+				Room.instance.solutions = solutions;
+				Room.instance.computeTotalScore();
+				Room.instance.game = game;
+			}
+		});
+		socket.on('countdown', (time, players, scores, lastWinnerIndex) => {
+			if (Room.instance != undefined) {
+				Room.instance.time = time;
+				Room.instance.rankings = [players,scores];
+				Room.instance.lastWinnerIndex = lastWinnerIndex;
+			}
+		});
+	};
+
+	sketch.draw = () => {
+		sketch.background(0);
+		if (Room.instance == undefined) {
+			let x = 0.5 * sketch.width;
+			let y = sketch.height * 0.25 - 20;
+			textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER', sketch);
+			y = sketch.height * 0.5 - 40;
+			textWithSprites('Enter your name', x, y, textZoom*1, 'CENTER', sketch);
+		} else {
+			let x = 0.5 * sketch.width;
+			let y = sketch.height * 0.1;
+			textWithSprites('MASSIVE BOGGLE', x, y, textZoom*1.8, 'CENTER', sketch);
+			if (Room.instance.state == 'rolling') {
+				let x = 0.5 * sketch.width;
+				let y = sketch.height * 0.2;
+				textWithSprites('tirage #' + Room.instance.game + '...', x, y, textZoom*1, 'CENTER', sketch);
+			} else if (Room.instance.state == 'gaming') {
+				let x = 0.5 * sketch.width;
+				let y = sketch.height * 0.2;
+				textWithSprites('partie ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER', sketch)
+				Room.instance.displayGrid(sketch);
+				sketch.stroke('white');
+				sketch.fill('white');
+				sketch.textFont('futura');
+				sketch.textSize(30);
+				x = sketch.width/2 - 95;
+				y = sketch.height*0.8;
+				sketch.textAlign(sketch.LEFT);
+				sketch.text('>', x-20, sketch.height*0.8, sketch.width-40, sketch.height-40);
+				sketch.text(inputWord, x, y, sketch.width-40, sketch.height-40);
+				sketch.textAlign(sketch.CENTER);
+				sketch.textSize(15)
+				sketch.fill(...answerColor);
+				sketch.stroke(...answerColor);
+				sketch.text(answerMessage, sketch.width/2, sketch.height*0.9);
+				//textWithSprites(answerMessage , width/2, height*0.9, textZoom*0.8, 'CENTER')
+				Room.instance.displayScore(sketch);
+				Room.instance.displayTime(sketch);
+				Room.instance.displayRanks(sketch);
+			} else if (Room.instance.state == 'ending') {
+				let x = 0.5 * sketch.width;
+				let y = sketch.height * 0.2;
+				textWithSprites('resultat ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER', sketch);
+				textWithSprites(Room.instance.playerName + ' ' + (Room.instance.rankings[0].indexOf(Room.instance.playerName) + 1).toString() + '/' + Room.instance.rankings[0].length.toString(), x, y + 20, textZoom*1, 'CENTER', sketch);
+				Room.instance.displayGrid(sketch);
+				inputWord = '';
+				answerMessage = '';
+				Room.instance.displayTime(sketch);
+				Room.instance.displaySolutions(sketch);
+				Room.instance.displayRanks(sketch);
+			}
+		};
+	};
+
+	sketch.windowResized = () => {
+		sketch.resizeCanvas(sketch.windowWidth, sketch.windowHeight);
+		if (Room.instance == undefined) {
+			inputName.center();
+			playButton.position(sketch.width*0.5 - playButton.width*0.5, inputName.position().y + 30);
+		}
+	};
+
+	sketch.keyPressed = () => {
+		if (Room.instance != undefined && Room.instance.state == 'gaming') {
+			if (sketch.keyCode == sketch.BACKSPACE){
+				inputWord = inputWord.substring(0, inputWord.length - 1);
+				if (Room.instance.highlightedLetters.length > 0) Room.instance.highlightedLetters.pop();
+				if (inputWord.length > 0) Room.instance.checkLettersToHighlight(inputWord);
+			}
+		}
+	};
+
+	sketch.keyTyped = () => {
+		if (Room.instance != undefined && Room.instance.state == 'gaming') {
+			if (sketch.keyCode == sketch.ENTER) {
+				if (inputWord.length <= 2) console.log('3 lettres mini');
+				else socket.emit('newWord',inputWord, function(answer, word){[answerMessage, answerColor] = Room.instance.checkAnswer(answer, word, sketch)});
+			} else if (sketch.keyCode != sketch.BACKSPACE && inputWord.length < 16) {
+				inputWord += sketch.key;
+				Room.instance.checkLettersToHighlight(inputWord);
+			}
 		}
 	}
-}
+};
 
-function keyTyped(){
-	if (Room.instance != undefined && Room.instance.state == 'gaming') {
-		if (keyCode == ENTER) {
-			if (inputWord.length <= 2) console.log('3 lettres mini');
-			else socket.emit('newWord',inputWord, function(answer, word){[answerMessage, answerColor] = Room.instance.checkAnswer(answer, word)});
-		} else if (keyCode != BACKSPACE && inputWord.length < 16) {
-			inputWord += key;
-			Room.instance.checkLettersToHighlight(inputWord);
-		}
-	}
-}
-
-function launchGame(){
-	socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName){
-					// create the map object
-					removeElements();
-					started = true;
-					Room.instance = new Room(id, state, game, grid, solutions, playerName);
-				});
-}
-
-
-
-
+let myp5 = new p5(s);
