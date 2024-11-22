@@ -10,8 +10,11 @@ class Player {
     this.room = undefined;
     this.found = [];
     Player.instances[this.id] = this;
-    this.number = Object.keys(Player.instances).length;
+	Player.number++;
+    this.number = Player.number;
+    // this.number = Object.keys(Player.instances).length;
     this.name = 'Anon'+this.number;
+	this.requestedName = '';
   }
 
   cleanup(){
@@ -22,11 +25,16 @@ class Player {
 
   disconnection(){
     // remove player from playerList of his map
-    if (this.room != undefined) delete this.room.players[this.id];
+	console.log('Player ' + this.name + ' disconnected')
+    if (this.room != undefined) {
+		console.log("Player " + this.name + " quits room #" + this.room.id);
+		delete this.room.players[this.id];
+	}		
     delete Player.instances[this.id];
   }
 }
 Player.instances = {};
+Player.number = 0;
 
 class Room {
   constructor(){
@@ -64,7 +72,7 @@ class Room {
   }
 
   setLastWinner(){
-    this.lastWinner = Object.keys(this.players).sort((a,b) => {return this.players[b].score - this.players[a].score})[0];
+    this.lastWinner = Object.values(this.players).sort((a,b) => {return b.score - a.score})[0];
   }
 
   checkSolution(word, player){
@@ -123,6 +131,7 @@ class Room {
           console.log('Room ' + this.id + ' - Game #' + this.game + ' - results');
           this.state = 'ending';
           this.setLastWinner();
+          if (this.lastWinner != undefined) console.log('Room ' + this.id + ' - Game #' + this.game + ' - winner is ' + this.lastWinner.name);
           io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
           var phase2 = setTimeout(() => {
             // reset timers
@@ -137,10 +146,10 @@ class Room {
 Room.id = 0;
 Room.instances = [];
 
-console.log('server starting');
 var express = require('express');
 var app = express();
-var server = app.listen(3000);
+var port = 3000
+var server = app.listen(port);
 app.use(express.static('public'));
 app.get('/', index);
 function index(request, response){       
@@ -151,18 +160,18 @@ var socket = require('socket.io');
 var io = socket(server);
 io.sockets.on('connection', newConnection);
 
+console.log('server started on port ' + port);
 var game = new Room();
-var gameTime = 150;
+var gameTime = 90;
 var resultTime = 15;
 
 function newConnection(socket){
   var player = new Player(socket.id);
-  console.log('new connection: player ' + player.name);
+  console.log('new connection: player ' + player.id + ' (init name ' + player.name + ')');
   socket.emit('hello', player.name);
 
   socket.on('playGame', function(playerName, welcome){
     // 1 choose the room
-    player.name = playerName;
     var game = undefined;
     if (Room.instances.length == 0) game = new Room();
     else {
@@ -175,8 +184,18 @@ function newConnection(socket){
       }
       if (noRoom == true) game = new Room();
     }
-    console.log('Player ' + player.name + ' joins room #' + game.id);
-    // 2 join the room
+	player.requestedName = playerName;
+	var newName = playerName;
+    var i = 0;
+	for (var oPlayer in game.players) {
+		if (game.players[oPlayer].requestedName == playerName) i++;
+	}
+	if (i > 0) newName = playerName +'.'+i;
+	console.log('Player ' + player.name + ' is now ' + newName);
+    player.name = newName;
+	console.log('Player ' + player.name + ' joins room #' + game.id);
+
+	// 2 join the room
     socket.join(game.id);
     player.room = game;
     game.players[socket.id] = player;
@@ -188,7 +207,7 @@ function newConnection(socket){
       solutions = game.solutions;
       grid = game.grid;
     }
-    welcome(game.id, game.state, game.game, grid, solutions, playerName);
+    welcome(game.id, game.state, game.game, grid, solutions, player.name);
   });
 
   socket.on('newWord', function(word, result){

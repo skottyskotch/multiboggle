@@ -21,7 +21,7 @@ var dices = {
 function initDict(){
 	var data = fs.readFileSync('resource/dict_concat_fr.csv', 'utf8')
 	var wordDict = {};
-	for (const word of data.split('\n')){
+	for (var word of data.split('\n')){
 		if (word.length > 2 && word.length < 17 && word.indexOf('-') == -1) {
 			if (word.slice(-1) == '\r') word = word.slice(0,-1);
 			if (wordDict[word.length] != undefined) wordDict[word.length].push(word.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase());
@@ -105,11 +105,11 @@ function findSolutions(){
 		}
 	}
 	var endTime = Date.now();
-	console.log(tempSolutions.length + ' words found in ' + String((endTime - startTime)/1000));
 	var dSolutions = {};
 	for (var sol of tempSolutions){
 		dSolutions[sol] = '';
 	}
+	console.log(Object.keys(dSolutions).length + ' words found in ' + String((endTime - startTime)/1000));
 	return Object.keys(dSolutions);
 }
 
@@ -132,8 +132,12 @@ var wordRootsList = [];
 function boggle() {
 	wordList = initDict();
 	wordRootsList = initWordRoots(wordList);
-	grid = initGrid();
-	var solutions = sortSolution(findSolutions());
+	var solutions = [];
+	while(solutions.length < 100){
+		grid = initGrid();
+		solutions = sortSolution(findSolutions());
+		if (solutions.length < 100) console.log('Reroll until at least 100 solutions');
+	}
 	//for (var solution of solutions){
 	//	console.log(solution);
 	//}

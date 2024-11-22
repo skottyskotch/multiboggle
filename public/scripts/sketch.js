@@ -232,7 +232,7 @@ const mainSketch = ( sketch ) => {
 		playButton = sketch.createButton('Play');
 		playButton.position(mainCanvas.position().x + mainCanvas.width*0.5 - playButton.width*0.5, inputName.position().y + 30);
 		playButton.mousePressed(function() {
-		socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName){
+			socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName){
 					// create the map object
 					sketch.removeElements();
 					started = true;
