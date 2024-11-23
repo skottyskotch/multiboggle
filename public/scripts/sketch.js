@@ -17,7 +17,7 @@ class Room {
 		this.totalScore = 0;
 		this.lastWinnerIndex = -1;
 		this.time = 0;
-		this.scrollMaxSpeed = 10;
+		this.scrollMaxSpeed = 50;
 		this.leftPanelWidth = 150;
 		this.leftScrollPos = 0;
 		this.rightPanelWidth = 150;
