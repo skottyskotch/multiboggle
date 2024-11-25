@@ -1,6 +1,6 @@
 // class Room
 class Room {
-	constructor(id, state, game, grid, solutions, playerName){
+	constructor(id, state, game, grid, solutions, playerName, playerSolutions){
 		this.id = id;
 		this.game = game;
 		this.playerName = playerName;
@@ -12,17 +12,20 @@ class Room {
 		this.possibilitiesHistoryByIndex = [];
 		this.highlightedLetters = [];
 		this.solutions = solutions;
+		this.playerSolutions = playerSolutions;
 		this.found = [];
 		this.score = 0;
 		this.totalScore = 0;
 		this.lastWinnerIndex = -1;
 		this.time = 0;
-		this.scrollMaxSpeed = 50;
+		this.scrollMaxSpeed = 70;
 		this.leftPanelWidth = 150;
 		this.leftScrollPos = 0;
 		this.rightPanelWidth = 150;
 		this.rightScrollPos = 0;
 		this.update(grid);
+		this.highlightScores = false;
+		this.highlightedPlayed = '';
 		Room.instance = this;
 	}
 
@@ -41,6 +44,9 @@ class Room {
 		this.rankings = [[],[]];
 		this.leftScrollPos = 0;
 		this.rightScrollPos = 0;
+		this.playerSolutions = {};
+		this.highlightScores = false;
+		this.highlightedPlayed = '';
 	}
 
 	cleanWord(){
@@ -171,8 +177,13 @@ class Room {
 
 	displaySolutions(sketch){
 		for (var i = 0; i < this.solutions.length; i++){
-			if (this.found.indexOf(this.solutions[i]) == -1) sketch.tint(100,100,100);
-			else sketch.noTint()
+			if (this.highlightScores && this.highlightedPlayed != '') {
+				if (this.playerSolutions[this.highlightedPlayed].indexOf(solutions[i]) == -1) sketch.tint(100,100,100);
+			}
+			else {
+				if (this.found.indexOf(this.solutions[i]) == -1) sketch.tint(100,100,100);
+				else sketch.noTint();				
+			}
 			textWithSprites(this.solutions[i], 10, 50 + i*15 + this.leftScrollPos, textZoom*0.8, 'LEFT', sketch);
 			var wordScore = 0;
 			if (this.solutions[i].length == 3) wordScore = 1;
@@ -198,19 +209,24 @@ class Room {
 	displayRanks(sketch){
 		for (var i = 0; i < this.rankings[0].length; i++){
 			if (this.lastWinnerIndex != -1 && this.lastWinnerIndex == i) sketch.image(crownImage, sketch.width - 50 - (this.rankings[0][i].toString().length+1)*16-14, 25 + i*15 + 14, 28, 28);
-			textWithSprites(this.rankings[1][i].toString(), sketch.width - 10, 50 + i*15 + this.rightScrollPos, textZoom*1, 'RIGHT', sketch);
-			textWithSprites(this.rankings[0][i], sketch.width - this.rightPanelWidth, 50 + i*15 + this.rightScrollPos, textZoom*1, 'LEFT', sketch);
+			textWithSprites(this.rankings[1][i].toString(), sketch.width - 10, 60 + i*15 + this.rightScrollPos, textZoom*1, 'RIGHT', sketch);
+			if (this.highlightScores && sketch.mouseX < 60 + i*15 + this.rightScrollPos + 10 && sketch.mouseX > 60 + i*15 + this.rightScrollPos - 10) this.highlightedPlayed = this.rankings[1][i];
+			textWithSprites(this.rankings[0][i], sketch.width - this.rightPanelWidth, 60 + i*15 + this.rightScrollPos, textZoom*1, 'LEFT', sketch);
 		}
 		sketch.noStroke();
 		sketch.fill(0,100);
 		sketch.rect(sketch.width - this.rightPanelWidth, 0, this.rightPanelWidth, 25);
 		textWithSprites('Classement', sketch.width - 10, 10, textZoom*1, 'RIGHT', sketch);
+		textWithSprites('Room #' + Room.instance.id, sketch.width - 10, 30, textZoom*1, 'RIGHT', sketch);
 	}
 }
 Room.instance = undefined;
 
 const mainSketch = ( sketch ) => {
 	var mainCanvas;
+	sketch.defaultBackground  = 40;
+	sketch.windowWidthRatio = 0.7;
+	sketch.windowHeight;
 	sketch.preload = () => {
 		//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
 		fontSpriteSheet 		= sketch.loadImage("images/pixel_font_16x6.png");
@@ -224,19 +240,20 @@ const mainSketch = ( sketch ) => {
 		fontSprites = initSprite(fontSpriteSheet,16,6);
 		//fontSprites = initSprite(fontSpriteSheet,15,8);
 		fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
-		mainCanvas = sketch.createCanvas(sketch.windowWidth,sketch.windowHeight);
-		mainCanvas.position(0, 0);
-    	mainCanvas.mouseWheel(sketch.doScroll);
+		width = (1 - leftPanelWidthRatio - rightPanelWidthRatio)*sketch.windowWidth;
+		mainCanvas = sketch.createCanvas(width,sketch.windowHeight);
+		positionX = Math.max(sketch.windowWidth*leftPanelWidthRatio, 150);
+		mainCanvas.position(positionX, 0);
 		inputName = sketch.createInput();
 		inputName.position(mainCanvas.position().x + mainCanvas.width * 0.5 - inputName.width*0.5, mainCanvas.height*0.5);
 		playButton = sketch.createButton('Play');
 		playButton.position(mainCanvas.position().x + mainCanvas.width*0.5 - playButton.width*0.5, inputName.position().y + 30);
 		playButton.mousePressed(function() {
-			socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName){
+			socket.emit('playGame', inputName.value(), function (id, state, game, grid, solutions, playerName, playerSolutions){
 					// create the map object
 					sketch.removeElements();
 					started = true;
-					Room.instance = new Room(id, state, game, grid, solutions, playerName);
+					Room.instance = new Room(id, state, game, grid, solutions, playerName, playerSolutions);
 				});
 		});
 
@@ -259,7 +276,6 @@ const mainSketch = ( sketch ) => {
 							13:[                        8 ,9 ,10,   12,   14   ],
 							14:[                           9 ,10,11,   13,   15],
 							15:[                              10,11,      14   ]};
-
 		socket = io.connect('http://localhost:3000');
 		socket.on('hello', (defaultPlayerName) => {inputName.value(defaultPlayerName);})
 		socket.on('rolling', (game) => {
@@ -276,10 +292,12 @@ const mainSketch = ( sketch ) => {
 				Room.instance.game = game;
 			}
 		});
-		socket.on('solutions', (game, solutions) => {
+		socket.on('solutions', (game, solutions, playerSolutions) => {
 			if (Room.instance != undefined) {
 				Room.instance.state = 'ending';
 				Room.instance.solutions = solutions;
+				Room.instance.playerSolutions = playerSolutions;
+				test = playerSolutions;
 				Room.instance.computeTotalScore();
 				Room.instance.game = game;
 			}
@@ -309,7 +327,8 @@ const mainSketch = ( sketch ) => {
 				let x = 0.5 * sketch.width;
 				let y = sketch.height * 0.2;
 				textWithSprites('tirage #' + Room.instance.game + '...', x, y, textZoom*1, 'CENTER', sketch);
-			} else if (Room.instance.state == 'gaming') {
+			}
+			else if (Room.instance.state == 'gaming') {
 				let x = 0.5 * sketch.width;
 				let y = sketch.height * 0.2;
 				textWithSprites('partie ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER', sketch)
@@ -328,10 +347,11 @@ const mainSketch = ( sketch ) => {
 				sketch.fill(...answerColor);
 				sketch.stroke(...answerColor);
 				sketch.text(answerMessage, sketch.width/2, sketch.height*0.9);
-				Room.instance.displayScore(sketch);
+				// Room.instance.displayScore(sketch);
 				Room.instance.displayTime(sketch);
-				Room.instance.displayRanks(sketch);
-			} else if (Room.instance.state == 'ending') {
+				// Room.instance.displayRanks(sketch);
+			}
+			else if (Room.instance.state == 'ending') {
 				let x = 0.5 * sketch.width;
 				let y = sketch.height * 0.2;
 				textWithSprites('resultat ' + '#' + Room.instance.game, x, y, textZoom*1, 'CENTER', sketch);
@@ -339,16 +359,19 @@ const mainSketch = ( sketch ) => {
 				Room.instance.displayGrid(sketch);
 				inputWord = '';
 				answerMessage = '';
-				Room.instance.displaySolutions(sketch);
+				// Room.instance.displaySolutions(sketch);
 				Room.instance.displayTime(sketch);
-				Room.instance.displayRanks(sketch);
+				// Room.instance.displayRanks(sketch);
 			}
 		};
 	};
 
 	sketch.windowResized = () => {
-		sketch.resizeCanvas(sketch.windowWidth, sketch.windowHeight);
-		mainCanvas.position(0, 0);
+		positionXmin = Math.max(sketch.windowWidth*leftPanelWidthRatio, 150);
+		mainCanvas.position(positionXmin, 0);
+		positionXmax = Math.min(sketch.windowWidth*(1-rightPanelWidthRatio), sketch.windowWidth - 150);
+		width = positionXmax - positionXmin;
+		sketch.resizeCanvas(width, sketch.windowHeight);
 		if (Room.instance == undefined) {
 			inputName.position(mainCanvas.position().x + mainCanvas.width * 0.5 - inputName.width*0.5, mainCanvas.height*0.5);
 			playButton.position(mainCanvas.position().x + mainCanvas.width * 0.5 - playButton.width*0.5, inputName.position().y + 30);
@@ -376,10 +399,49 @@ const mainSketch = ( sketch ) => {
 			}
 		}
 	}
+};
+
+const leftSketch = ( sketch ) => {
+	var leftCanvas;
+	sketch.defaultBackground  = 10;
+
+	sketch.preload = () => {
+		//fontSpriteSheet = loadImage("images/pixel_font_15x8.png");
+		//fontSpriteSheet = sketch.loadImage("images/pixel_font_16x6.png");	
+	};
+
+	sketch.setup = () => {
+		textZoom = 0.8;
+		fontSprites = initSprite(fontSpriteSheet,16,6);
+		fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
+		width = Math.max(sketch.windowWidth*leftPanelWidthRatio, 150);
+		leftCanvas = sketch.createCanvas(width, sketch.windowHeight);
+		leftCanvas.position(0, 0);
+    	leftCanvas.mouseWheel(sketch.doScroll);
+	};
+
+	sketch.draw = () => {
+		sketch.background(sketch.defaultBackground);
+		if (Room.instance == undefined) {
+		} else {
+			if (Room.instance.state == 'rolling') {
+			} else if (Room.instance.state == 'gaming') {
+				Room.instance.displayScore(sketch);
+			} else if (Room.instance.state == 'ending') {
+				Room.instance.displaySolutions(sketch);
+			}
+		};
+	};
+
+	sketch.windowResized = () => {
+		width = Math.max(sketch.windowWidth*leftPanelWidthRatio, 150);
+		sketch.resizeCanvas(width, sketch.windowHeight);
+		leftCanvas.position(0, 0);
+	};
 
 	sketch.doScroll = function(event) {
 		if (Room.instance != undefined) {
-			if (sketch.mouseX < Room.instance.leftPanelWidth) {
+			if (sketch.mouseX < sketch.windowWidth) {
 				let scrollStep = sketch.constrain(event.deltaY, -Room.instance.scrollMaxSpeed, Room.instance.scrollMaxSpeed);
 				Room.instance.leftScrollPos += scrollStep;
 				leftScrollMin = 0;
@@ -401,99 +463,105 @@ const mainSketch = ( sketch ) => {
 				Room.instance.rightScrollPos = sketch.constrain(Room.instance.rightScrollPos, rightScrollMin, 0);
 			}
 		}
-	}
-};
-
-/*const leftSketch = ( sketch ) => {
-	sketch.preload = () => {
-		//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
-		fontSpriteSheet 		= sketch.loadImage("images/pixel_font_16x6.png");	
 	};
 
-	sketch.setup = () => {
-		textZoom = 0.8;
-		fontSprites = initSprite(fontSpriteSheet,16,6);
-		//fontSprites = initSprite(fontSpriteSheet,15,8);
-		fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
-		leftCanvas = sketch.createCanvas(leftPanelWidth, sketch.windowHeight*0.25);
-		leftCanvas.position(0, sketch.windowHeight*0.5, 'absolute');
-    	leftCanvas.mouseWheel(sketch.doScroll);
-	};
-
-	sketch.draw = () => {
-		sketch.background(40);
-		if (Room.instance == undefined) {
-		} else {
-			if (Room.instance.state == 'rolling') {
-			} else if (Room.instance.state == 'gaming') {
-				Room.instance.displayScore(sketch);
-			} else if (Room.instance.state == 'ending') {
-				Room.instance.displaySolutions(sketch);
-			}
-		};
-	};
-
-	sketch.windowResized = () => {
-		sketch.resizeCanvas(leftPanelWidth, sketch.windowHeight);
-		leftCanvas.position(0, 0);
-	};	
-
-	sketch.doScroll = function(event) {
-		scrollStep = sketch.constrain(event.deltaY, -scrollMaxSpeed, scrollMaxSpeed);
-		scrollPos += scrollStep;
-		//scrollPos = sketch.constrain(scrollPos, scrollPosMin, scrollPosMax) // top/bottom margin stops
-	}
 }
 
 const rightSketch = ( sketch ) => {
+	var rightCanvas;
+	sketch.defaultBackground  = 10;
+	
 	sketch.preload = () => {
 		//fontSpriteSheet 		= loadImage("images/pixel_font_15x8.png");
-		fontSpriteSheet 		= sketch.loadImage("images/pixel_font_16x6.png");	
+		// fontgSpriteSheet 		= sketch.loadImage("images/pixel_font_16x6.png");	
 	};
 
 	sketch.setup = () => {
 		textZoom = 0.8;
-		scrollMaxSpeed = 10;
-		scrollPos = 0;
 		fontSprites = initSprite(fontSpriteSheet,16,6);
 		//fontSprites = initSprite(fontSpriteSheet,15,8);
 		fontTable=' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ çÜéÂAAçÊÊEÏÎIäaéAAÔÖOÛU';
-		rightCanvas = sketch.createCanvas(rightPanelWidth + 5, sketch.windowHeight);
-		rightCanvas.position(sketch.windowWidth - rightPanelWidth - 5, 0);
+		width = Math.max(sketch.windowWidth*rightPanelWidthRatio, 150);
+		rightCanvas = sketch.createCanvas(width, sketch.windowHeight);
+		positionXmax = Math.min(sketch.windowWidth*(1-rightPanelWidthRatio), sketch.windowWidth - 150);
+		rightCanvas.position(positionXmax, 0);
     	rightCanvas.mouseWheel(sketch.doScroll);
+		rightCanvas.mouseOver(sketch.highlightScoresOn);
+		rightCanvas.mouseOut(sketch.highlightScoresOff);
 	};
 
 	sketch.draw = () => {
-		sketch.background(0);
-		sketch.fill(255);
-		sketch.translate(0, scrollPos);
-  		sketch.rect(10, 10, 50, 50);
+		sketch.background(sketch.defaultBackground);
 		if (Room.instance != undefined) {
 			if (Room.instance.state == 'gaming') {
 				Room.instance.displayRanks(sketch);
-			} else if (Room.instance.state == 'ending') {
+			}
+			else if (Room.instance.state == 'ending') {
+				Room.instance.displayRanks(sketch);
 			}
 		};
 	};
 
 	sketch.windowResized = () => {
-		sketch.resizeCanvas(rightPanelWidth + 5, sketch.windowHeight);
-		rightCanvas.position(sketch.windowWidth - rightPanelWidth - 5, 0);
+		width = Math.max(sketch.windowWidth*rightPanelWidthRatio, 150);
+		sketch.resizeCanvas(width, sketch.windowHeight);
+		positionXmax = Math.min(sketch.windowWidth*(1-rightPanelWidthRatio), sketch.windowWidth - 150);
+		rightCanvas.position(positionXmax, 0);
 	};
 
 	sketch.doScroll = function(event) {
-		if (sketch.mouseX < leftPanelWidth) {
-			let scrollStep = sketch.constrain(event.deltaY, -scrollMaxSpeed, scrollMaxSpeed);
-			leftScrollPos += scrollStep;
-			leftScrollPos = sketch.constrain(leftScrollPos, 0, 10);
-		} else if (sketch.mouseY > rightPanelWidth){
-			let scrollStep = sketch.constrain(event.deltaY, -scrollMaxSpeed, scrollMaxSpeed);
-			rightScrollPos += scrollStep;
-			rightScrollPos = sketch.constrain(leftScrollPos, 0, 10);
+		if (Room.instance != undefined) {
+			positionXmax = Math.min(sketch.windowWidth*(1-rightPanelWidthRatio), sketch.windowWidth - 150);
+			if (sketch.mouseX > positionXmax) {
+				let scrollStep = sketch.constrain(event.deltaY, -Room.instance.scrollMaxSpeed, Room.instance.scrollMaxSpeed);
+				Room.instance.leftScrollPos += scrollStep;
+				leftScrollMin = 0;
+				if (Room.instance.state == 'gaming') {
+					if (50 + Room.instance.found.length * 15 > sketch.height) leftScrollMin = sketch.height - 50 - Room.instance.found.length * 15;
+				} else if (Room.instance.state == 'ending') {
+					if (50 + Room.instance.solutions.length * 15 > sketch.height) leftScrollMin = sketch.height - 50 - Room.instance.solutions.length * 15;
+				}
+				Room.instance.leftScrollPos = sketch.constrain(Room.instance.leftScrollPos, leftScrollMin, 0);
+			} else if (sketch.mouseX > sketch.width - Room.instance.rightPanelWidth){
+				let scrollStep = sketch.constrain(event.deltaY, -Room.instance.scrollMaxSpeed, Room.instance.scrollMaxSpeed);
+				Room.instance.rightScrollPos += scrollStep;
+				rightScrollMin = 0;
+				if (Room.instance.state == 'gaming') {
+					if (50 + Room.instance.rankings[0].length * 15 > sketch.height) rightScrollMin = sketch.height - 50 - Room.instance.rankings[0].length * 15;
+				} else if (Room.instance.state == 'ending') {
+					if (50 + Room.instance.rankings[0].length * 15 > sketch.height) rightScrollMin = sketch.height - 50 - Room.instance.rankings[0].length * 15;
+				}
+				Room.instance.rightScrollPos = sketch.constrain(Room.instance.rightScrollPos, rightScrollMin, 0);
+			}
+		}
+	};
+
+	sketch.highlightScoresOn = function() {
+		if (Room.instance == undefined) {
+		}
+		else {
+			if (Room.instance.state == 'ending') {
+				Room.instance.highlightScores = true;
+				console.log(Room.instance.highlightScores);
+			}
 		}
 	}
-}*/
+	
+	sketch.highlightScoresOff = function() {
+		if (Room.instance == undefined) {
+		}
+		else {
+			if (Room.instance.state == 'ending') {
+				Room.instance.highlightScores = false;
+				console.log(Room.instance.highlightScores);
+			}
+		}
+	}
+}
 
+let leftPanelWidthRatio = 0.15;
+let rightPanelWidthRatio = 0.15;
+let test = {};
 let mainP5 = new p5(mainSketch);
-//let leftP5 = new p5(leftSketch);
-//let rightP5 = new p5(rightSketch);
+let leftP5 = new p5(leftSketch);
+let rightP5 = new p5(rightSketch);

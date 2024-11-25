@@ -47,6 +47,7 @@ class Room {
     this.state = 'starting'; // [starting, rolling, gaming, ending]
     this.grid = [];
     this.solutions = [];
+    this.playerSolutions = {};
     this.gameTimer = undefined;
     this.lastWinner = undefined;
     Room.instances.push(this);
@@ -100,6 +101,7 @@ class Room {
         this.game++;
         console.log('Room ' + this.id + ' - Game #' + this.game + ' - rolling');
         this.state = 'rolling';
+		this.playerSolutions = {};
         io.sockets.in(this.id).emit('rolling', this.game);
         var grid_solutions = Boggle.boggle(); //  return {'grid':grid, 'solutions': solutions};
         this.grid = grid_solutions['grid'];
@@ -132,7 +134,10 @@ class Room {
           this.state = 'ending';
           this.setLastWinner();
           if (this.lastWinner != undefined) console.log('Room ' + this.id + ' - Game #' + this.game + ' - winner is ' + this.lastWinner.name);
-          io.sockets.in(this.id).emit('solutions',this.game, this.solutions);
+          for (var player of Object.values(this.players)) {
+			  this.playerSolutions[player.name] = player.found;
+		  }
+		  io.sockets.in(this.id).emit('solutions',this.game, this.solutions, this.playerSolutions);
           var phase2 = setTimeout(() => {
             // reset timers
             clearInterval(resultCountdown);
@@ -207,7 +212,8 @@ function newConnection(socket){
       solutions = game.solutions;
       grid = game.grid;
     }
-    welcome(game.id, game.state, game.game, grid, solutions, player.name);
+	let playerSolutions = {};
+    welcome(game.id, game.state, game.game, grid, solutions, player.name, playerSolutions);
   });
 
   socket.on('newWord', function(word, result){
